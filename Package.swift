@@ -4,7 +4,7 @@ import PackageDescription
 let package = Package(
     name: "detectlatency",
     platforms: [
-        .macOS(.v10_15)
+        .macOS(.v13)
     ],
     products: [
         // Change this to define an executable, not a library.
