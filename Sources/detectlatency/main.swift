@@ -14,6 +14,7 @@ import SwiftSyntax
 //        })
 //"""
 
+//Use cases of the user driven interactions
 """
                         Button {
                             execute()
@@ -94,13 +95,23 @@ NavigationView {
 }
 """
 
+// Declaring the parser
 let sourceFile = Parser.parse(source: inputSwiftUISnippet)
 
 
+// Service that iterates over the source tree and contains logic that provides the code snippet that will be running upon user interaction
+
 class ViewModifierClosureExtractor: SyntaxVisitor {
+    // Set that contains keywords that will only process closures required
     let interactiveKeywords: Set<String> = ["Button", "onTapGesture", "contextMenu", "onChange", "onDrag", "Slider", "NavigationLink"]
+    
+    // iterating over the source tree with a type that process function syntax
     override func visit(_ node: FunctionCallExprSyntax) -> SyntaxVisitorContinueKind {
+        
+        // Fetching the expression in order to differentiate the closure desired from the rest
         if let memberAccess = node.calledExpression.as(MemberAccessExprSyntax.self) {
+            
+            // Condition that checks if it fits in the desired bracket and only processes when affirmative
             if interactiveKeywords.contains(memberAccess.declName.baseName.text) { // MemberAccessExprsyntax -> trailing closure syntax
                 let modifierName = memberAccess.declName.baseName.text
                 print("Detected view modifier: \(modifierName)")
@@ -120,10 +131,17 @@ class ViewModifierClosureExtractor: SyntaxVisitor {
         }
         return .visitChildren
     }
+    
+    // TODO:- Add functionCallExprSyntax logic and dissect the the interacrtive keywords from Views to View Modifiers
 }
+
+// Declaring the scanning logic that initiates the parsing of the source tree.
 let visitorViewModifier = ViewModifierClosureExtractor(viewMode: .all)
+
+// Iterating over the parsed code/ Abstract Syntax tree
 visitorViewModifier.walk(sourceFile)
 
+// Below code contains the logic that processes the SwiftUI views 
 //class InteractiveElementVisitor: SyntaxVisitor {
 //    
 //    var isInsideInteractiveElement = false
