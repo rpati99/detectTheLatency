@@ -1,70 +1,40 @@
 import SwiftParser // For parsing the input code
 import SwiftSyntax // For incorporating filtering logic for code detection
 import SwiftUI
+import Foundation
 
 //Use cases of the user driven interactions
 
-let inputSwiftUISnippet = """
-import SwiftUI
-var ContentView: some View {
-NavigationView {
-    ZStack {
-        VStack {
-            Button {
-                execute()
-            } label: {
-                Text("label")
-            }
-
-            Text("Tap me")
-                .onTapGesture {
-                    tapAction()
-                }
-    
-            Text("Long press me")
-                .contextMenu {
-                    Button(action: {
-                        contextAction()
-                    }) {
-                        Text("Perform action")
-                    }
-                }
-
-            Toggle(isOn: $isToggled) {
-                Text("Toggle me")
-            }
-            .onChange(of: isToggled) { newValue in
-                toggleValueChanged(newValue)
-            }
-
-            Slider(value: $sliderValue, in: 0...100, step: 1)
-                .onChange(of: sliderValue) { newValue in
-                    sliderValueChanged(newValue)
-                }
-
-            Text("Drag me")
-                .onDrag {
-                    performDragAction()
-                    return NSItemProvider(object: "DragData" as NSString)
-                }
-
-              NavigationLink(destination: {
-                  QuoteView(name: $name).toolbar(.hidden)
-              }, label: {
-                  Text("Continue")
-                      .foregroundStyle(.white)
-                      .padding()
-                      .background(Capsule().fill(Color.black))
-                      .shadow(radius: 10)
-              })
-            }
-        }
-    }
-}
-"""
+//let inputSwiftUISnippet = Parser.parse(source: <#T##String#>)
 
 // Declaring the parser
-let sourceFile = Parser.parse(source: inputSwiftUISnippet)
+
+private func processParsingWith(file: String) {
+    let fileContents: String
+    let fileURL = URL(filePath: "/Users/rp/detectlatency/File1.swift")
+    
+    do {
+        fileContents = try String.init(contentsOf: fileURL, encoding: .utf8)
+//        debugPrint(fileContents.trimmingCharacters(in: .whitespacesAndNewlines))
+        let processedFileContent = fileContents.trimmingCharacters(in: .whitespacesAndNewlines)
+        let parsedContent = Parser.parse(source: processedFileContent)
+        let visitorViewModifier = ViewModifierClosureExtractor(viewMode: .all)
+        visitorViewModifier.walk(parsedContent)
+        
+    } catch let error {
+        print("Error processing file contents \(error.localizedDescription)")
+    }
+//    let parser = Parser.parse(source: )
+    // Declaring the scanning logic that initiates the parsing of the source tree.
+//    let visitorViewModifier = ViewModifierClosureExtractor(viewMode: .all)
+//
+//    // Iterating over the parsed code/ Abstract Syntax tree
+//    visitorViewModifier.walk(fileContents)
+}
+
+processParsingWith(file: "/Users/rp/detectlatency/File1.swift")
+
+
 
 
 // Service that iterates over the source tree and contains logic that provides the code snippet that will be running upon user interaction
@@ -160,11 +130,7 @@ class ViewModifierClosureExtractor: SyntaxVisitor {
     // TODO:- Add functionCallExprSyntax logic and dissect the the interacrtive keywords from Views to View Modifiers
 }
 
-// Declaring the scanning logic that initiates the parsing of the source tree.
-let visitorViewModifier = ViewModifierClosureExtractor(viewMode: .all)
 
-// Iterating over the parsed code/ Abstract Syntax tree
-visitorViewModifier.walk(sourceFile)
 
 // Below code contains the logic that processes the SwiftUI views
 //class InteractiveElementVisitor: SyntaxVisitor {
