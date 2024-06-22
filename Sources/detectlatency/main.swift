@@ -1,32 +1,26 @@
-import SwiftParser
-import SwiftSyntax
-
-//l """
-//        NavigationLink(destination: {
-//            QuoteView(name: $name).toolbar(.hidden)
-//        }, label: {
-//            Text("Continue")
-//                .foregroundStyle(.white)
-//                .padding()
-//                .background(Capsule().fill(Color.black))
-//                .shadow(radius: 10)
-//            
-//        })
-//"""
+import SwiftParser // For parsing the input code
+import SwiftSyntax // For incorporating filtering logic for code detection
+import SwiftUI
 
 //Use cases of the user driven interactions
-"""
-                        Button {
-                            execute()
-                        } label: {
-                            Text("label")
-                        }
+
+let inputSwiftUISnippet = """
+import SwiftUI
+var ContentView: some View {
+NavigationView {
+    ZStack {
+        VStack {
+            Button {
+                execute()
+            } label: {
+                Text("label")
+            }
 
             Text("Tap me")
                 .onTapGesture {
                     tapAction()
                 }
-
+    
             Text("Long press me")
                 .contextMenu {
                     Button(action: {
@@ -36,17 +30,17 @@ import SwiftSyntax
                     }
                 }
 
-            Slider(value: $sliderValue, in: 0...100, step: 1)
-                .onChange(of: sliderValue) { newValue in
-                    sliderValueChanged(newValue)
-                }
-
             Toggle(isOn: $isToggled) {
                 Text("Toggle me")
             }
             .onChange(of: isToggled) { newValue in
                 toggleValueChanged(newValue)
             }
+
+            Slider(value: $sliderValue, in: 0...100, step: 1)
+                .onChange(of: sliderValue) { newValue in
+                    sliderValueChanged(newValue)
+                }
 
             Text("Drag me")
                 .onDrag {
@@ -54,41 +48,15 @@ import SwiftSyntax
                     return NSItemProvider(object: "DragData" as NSString)
                 }
 
-          NavigationLink(destination: {
-              QuoteView(name: $name).toolbar(.hidden)
-          }, label: {
-              Text("Continue")
-                  .foregroundStyle(.white)
-                  .padding()
-                  .background(Capsule().fill(Color.black))
-                  .shadow(radius: 10)
-              
-          })
-"""
-let inputSwiftUISnippet = """
-import SwiftUI
-var ContentView: some View {
-NavigationView {
-    ZStack {
-        VStack {
-
-            Text("Tap me")
-                .onTapGesture {
-                    tapAction()
-                }
-
-            Toggle(isOn: $isToggled) {
-                Text("Toggle me")
-            }
-            .onChange(of: isToggled) { newValue in
-                toggleValueChanged(newValue)
-            }
-
-            Slider(value: $sliderValue, in: 0...100, step: 1)
-                .onChange(of: sliderValue) { newValue in
-                    sliderValueChanged(newValue)
-                }
-
+              NavigationLink(destination: {
+                  QuoteView(name: $name).toolbar(.hidden)
+              }, label: {
+                  Text("Continue")
+                      .foregroundStyle(.white)
+                      .padding()
+                      .background(Capsule().fill(Color.black))
+                      .shadow(radius: 10)
+              })
             }
         }
     }
@@ -100,21 +68,40 @@ let sourceFile = Parser.parse(source: inputSwiftUISnippet)
 
 
 // Service that iterates over the source tree and contains logic that provides the code snippet that will be running upon user interaction
-
 class ViewModifierClosureExtractor: SyntaxVisitor {
-    // Set that contains keywords that will only process closures required
-    let interactiveKeywords: Set<String> = ["Button", "onTapGesture", "contextMenu", "onChange", "onDrag", "Slider", "NavigationLink"]
+    // Set that contains keywords that will only process closures required, TODO:- change to view and build another one that is ViewModifier
+    let interactiveViewsList: Set<String> = ["Button", "contextMenu", "Slider", "NavigationLink"]
+    let interactiveViewModifiersList: Set<String> = ["onTapGesture", "onChange", "onDrag"]
     
-    // iterating over the source tree with a type that process function syntax
+    var isInsideInteractiveElement = false
+    
+    // Handle view closures
     override func visit(_ node: FunctionCallExprSyntax) -> SyntaxVisitorContinueKind {
+        processFunctionCall(node)
+        return .visitChildren
+    }
+    
+    // Handle view closures
+    private func processFunctionCall(_ node: FunctionCallExprSyntax) {
         
+        // Handle Views
+        if let calledExpression = node.calledExpression.as(DeclReferenceExprSyntax.self) {
+            let contains = interactiveViewsList.contains(calledExpression.baseName.text)
+           
+            if contains {
+                isInsideInteractiveElement = true
+                processFunctionCallSemantics(node, forComponent: calledExpression.baseName.text)
+            }
+        }
+        
+        // Handle View Modifiers
         // Fetching the expression in order to differentiate the closure desired from the rest
         if let memberAccess = node.calledExpression.as(MemberAccessExprSyntax.self) {
             
             // Condition that checks if it fits in the desired bracket and only processes when affirmative
-            if interactiveKeywords.contains(memberAccess.declName.baseName.text) { // MemberAccessExprsyntax -> trailing closure syntax
+            if interactiveViewModifiersList.contains(memberAccess.declName.baseName.text) { // MemberAccessExprsyntax -> trailing closure syntax
                 let modifierName = memberAccess.declName.baseName.text
-                print("Detected view modifier: \(modifierName)")
+//                print("Detected view modifier: \(modifierName)")
                 
                 // Check if there's a trailing closure directly associated with the view modifier
                 if let trailingClosure = node.trailingClosure {
@@ -129,8 +116,46 @@ class ViewModifierClosureExtractor: SyntaxVisitor {
                 }
             }
         }
-        return .visitChildren
     }
+    
+    private func processFunctionCallSemantics(_ node: FunctionCallExprSyntax, forComponent component: String) {
+        
+//        print("node \(node) with component is \(component)")
+        
+        var closureFound = false
+
+        
+        if let trailingClosure = node.trailingClosure, component == "Button" {
+            if node.arguments.allSatisfy({ $0.label == nil }) {
+                        print("Button action closure found (trailing): \(trailingClosure.description)")
+                    }
+        }
+        
+        for (index, argument) in node.arguments.enumerated() {
+            if let closure = argument.expression.as(ClosureExprSyntax.self) {
+               
+                if component == "NavigationLink" && index == 0 {
+                    print("Navigation link closure code detected \(closure.description)")
+                    closureFound = true
+                } else if component == "Button" && argument.label?.text == "action" {
+                    print("Button with action code found \(closure.description)")
+                    closureFound = true
+                } else if component == "Button"  && (node.trailingClosure?.statements.count) ?? 0 > 0 {
+                    print("Button with closure found \(String(describing: closure.description))")
+                    closureFound = true
+                }
+            }
+            
+            if closureFound {
+                break
+            }
+        }
+    }
+    
+
+    
+    // iterating over the source tree with a type that process function syntax
+
     
     // TODO:- Add functionCallExprSyntax logic and dissect the the interacrtive keywords from Views to View Modifiers
 }
@@ -141,7 +166,7 @@ let visitorViewModifier = ViewModifierClosureExtractor(viewMode: .all)
 // Iterating over the parsed code/ Abstract Syntax tree
 visitorViewModifier.walk(sourceFile)
 
-// Below code contains the logic that processes the SwiftUI views 
+// Below code contains the logic that processes the SwiftUI views
 //class InteractiveElementVisitor: SyntaxVisitor {
 //    
 //    var isInsideInteractiveElement = false
@@ -181,6 +206,7 @@ visitorViewModifier.walk(sourceFile)
 //        }
 //    }
 //    
+//    // Logic that focuses on the scanning of relevant SwiftUI views that contain user driven spaces.
 //    private func processFunctionCallSemantics(_ node: FunctionCallExprSyntax, forComponent component: String) {
 //        
 //        print("node \(node) with component is \(component)")
@@ -220,7 +246,7 @@ visitorViewModifier.walk(sourceFile)
 //        
 //    }
 //    
-//    
+//     
 ////    override func visit(_ node: ClosureExprSyntax) -> SyntaxVisitorContinueKind {
 //////        nodeStack.append(Syntax(node))
 //////        TODO:- PREPROCESS THE CLOSURE and then iterate over it
