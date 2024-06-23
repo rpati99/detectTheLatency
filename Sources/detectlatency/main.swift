@@ -1,47 +1,47 @@
 import SwiftParser // For parsing the input code
 import SwiftSyntax // For incorporating filtering logic for code detection
-import SwiftUI
 import Foundation
-
-//Use cases of the user driven interactions
-
-//let inputSwiftUISnippet = Parser.parse(source: <#T##String#>)
+extension LabeledExprSyntax {
+    
+    var toClosure: ClosureExprSyntax? {
+        return self.expression.as(ClosureExprSyntax.self)
+    }
+ 
+}
 
 // Declaring the parser
-
 private func processParsingWith(file: String) {
     let fileContents: String
     let fileURL = URL(filePath: "/Users/rp/detectlatency/File1.swift")
     
     do {
         fileContents = try String.init(contentsOf: fileURL, encoding: .utf8)
-//        debugPrint(fileContents.trimmingCharacters(in: .whitespacesAndNewlines))
+        //  debugPrint(fileContents.trimmingCharacters(in: .whitespacesAndNewlines))
         let processedFileContent = fileContents.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        // Declaring parser
         let parsedContent = Parser.parse(source: processedFileContent)
+        
+        // Declaring modifier that visits the parsed syntax tree with the logic
         let visitorViewModifier = ViewModifierClosureExtractor(viewMode: .all)
+        
+        // Initating the code extraction
         visitorViewModifier.walk(parsedContent)
         
     } catch let error {
         print("Error processing file contents \(error.localizedDescription)")
     }
-//    let parser = Parser.parse(source: )
-    // Declaring the scanning logic that initiates the parsing of the source tree.
-//    let visitorViewModifier = ViewModifierClosureExtractor(viewMode: .all)
-//
-//    // Iterating over the parsed code/ Abstract Syntax tree
-//    visitorViewModifier.walk(fileContents)
 }
 
 processParsingWith(file: "/Users/rp/detectlatency/File1.swift")
 
 
 
-
 // Service that iterates over the source tree and contains logic that provides the code snippet that will be running upon user interaction
 class ViewModifierClosureExtractor: SyntaxVisitor {
     // Set that contains keywords that will only process closures required, TODO:- change to view and build another one that is ViewModifier
-    let interactiveViewsList: Set<String> = ["Button", "contextMenu", "Slider", "NavigationLink"]
-    let interactiveViewModifiersList: Set<String> = ["onTapGesture", "onChange", "onDrag"]
+    let interactiveViewsList: Set<String> = ["Button", "contextMenu", "Slider", "NavigationLink" ]
+    let interactiveViewModifiersList: Set<String> = ["onTapGesture", "onChange", "onDrag", "onDelete", "destructive", ]
     
     var isInsideInteractiveElement = false
     
@@ -90,31 +90,49 @@ class ViewModifierClosureExtractor: SyntaxVisitor {
     
     private func processFunctionCallSemantics(_ node: FunctionCallExprSyntax, forComponent component: String) {
         
-//        print("node \(node) with component is \(component)")
+
         
         var closureFound = false
 
         
-        if let trailingClosure = node.trailingClosure, component == "Button" {
-            if node.arguments.allSatisfy({ $0.label == nil }) {
-                        print("Button action closure found (trailing): \(trailingClosure.description)")
-                    }
+        
+        if let trailingClosure = node.trailingClosure {
+            if component == "Button" {
+
+                // Check if there's at least one unlabeled closure or explicitly labeled as action
+                let handleRoleParameter = node.arguments.contains(where: { $0.label?.text == "role" })
+                let handleTitleParameter = node.arguments.contains(where: { $0.label?.text == "title" })
+                let hasUnlabeledArguments = node.arguments.allSatisfy({ $0.label == nil })
+                if hasUnlabeledArguments || handleTitleParameter || handleRoleParameter {
+                    print("Button with trailing closure found ): \(trailingClosure.description)")
+                }
+                closureFound = true 
+            }
         }
         
+        
         for (index, argument) in node.arguments.enumerated() {
-            if let closure = argument.expression.as(ClosureExprSyntax.self) {
-               
+        
                 if component == "NavigationLink" && index == 0 {
-                    print("Navigation link closure code detected \(closure.description)")
+                    if let closure = argument.toClosure {
+                        print("Navigation link closure code detected \(closure.description)")
+                    }
+                  
                     closureFound = true
-                } else if component == "Button" && argument.label?.text == "action" {
-                    print("Button with action code found \(closure.description)")
-                    closureFound = true
-                } else if component == "Button"  && (node.trailingClosure?.statements.count) ?? 0 > 0 {
-                    print("Button with closure found \(String(describing: closure.description))")
-                    closureFound = true
+                } else if component == "Button" {
+                    if let _ = argument.label?.text.contains("action") {
+                        if let closure = argument.toClosure {
+                            print("Button with action code found \(closure.description)")
+                        }
+                        
+                        closureFound = true
+                    } else if (node.trailingClosure?.statements.count) ?? 0 > 0 {
+                        if let closure = argument.toClosure {
+                            print("Button with closure found \(closure.description)")
+                        }
+                        closureFound = true
+                    }
                 }
-            }
             
             if closureFound {
                 break
@@ -122,7 +140,8 @@ class ViewModifierClosureExtractor: SyntaxVisitor {
         }
     }
     
-
+    
+   
     
     // iterating over the source tree with a type that process function syntax
 

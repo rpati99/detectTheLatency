@@ -63,3 +63,13 @@ NavigationView {
         }
     }
 }
+
+
+ Copyright © Suguru Kishimoto. All rights reserved.
+
+
+
+
+
+
+
