@@ -24,6 +24,7 @@ let package = Package(
             dependencies: [
                 .product(name: "SwiftSyntax", package: "swift-syntax"),
                 .product(name: "SwiftParser", package: "swift-syntax"),
+                .product(name: "SwiftSyntaxBuilder", package: "swift-syntax")
             ],
             path: "Sources/detectlatency"  // Path to the directory containing 'main.swift'
         )

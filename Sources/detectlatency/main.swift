@@ -1,7 +1,7 @@
 import SwiftParser // For parsing the input code
 import SwiftSyntax // For incorporating filtering logic for code detection
-import Foundation
-
+import Foundation // Using Swift APIs
+import SwiftSyntaxBuilder // Generate code 
 
 // Declaring the parser
 private func processParsingWith(file: String) {
@@ -129,6 +129,8 @@ class ViewModifierClosureExtractor: SyntaxVisitor {
             }
         }
     }
+    
+    
 }
 
 
