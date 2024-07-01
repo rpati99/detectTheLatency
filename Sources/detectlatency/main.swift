@@ -143,6 +143,7 @@ import SwiftSyntaxBuilder // Generate code
 //}
 
 
+// Below code is present to understand the structure of syntax tree.
 let swiftUIDemoCode = """
 
 import SwiftUI
