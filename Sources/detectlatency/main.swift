@@ -1,3 +1,9 @@
+/*
+ 
+ This file is named as main.swift to declare code at top level.
+ 
+ */
+
 import SwiftParser // For parsing the input code
 import SwiftSyntax // For incorporating filtering logic for code detection
 import Foundation // Using Swift APIs
