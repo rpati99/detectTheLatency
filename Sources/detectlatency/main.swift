@@ -1,6 +1,6 @@
 /*
  
- This file is named as main.swift to declare code at top level.
+main.swift for declaring code at top level. 
  
  */
 
