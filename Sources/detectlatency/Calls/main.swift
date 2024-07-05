@@ -6,7 +6,7 @@ import SwiftSyntaxBuilder // Generate code
 // Declaring the parser
 private func processParsingWith(file: String) {
     let fileContents: String
-    let fileURL = URL(filePath: "/Users/rp/detectlatency/File1.swift")
+    let fileURL = URL(filePath: file)
     
     do {
         fileContents = try String.init(contentsOf: fileURL, encoding: .utf8)
@@ -17,7 +17,7 @@ private func processParsingWith(file: String) {
         let parsedContent = Parser.parse(source: processedFileContent)
         
         // Declaring modifier that visits the parsed syntax tree with the logic
-        let visitorViewModifier = ViewModifierClosureExtractor(viewMode: .all)
+        let visitorViewModifier = CodeExtractorService(viewMode: .all)
         
         // Initating the code extraction
         visitorViewModifier.walk(parsedContent)
