@@ -9,6 +9,10 @@ import Foundation
 import SwiftUI
 
 var ContentView: some View {
+    
+    @State var isToggled: Bool = false
+    @State var sliderValue: Float = 0.0
+    
     NavigationView {
         ZStack {
             VStack {
@@ -51,7 +55,7 @@ var ContentView: some View {
                     }
                 
                 NavigationLink(destination: {
-                    QuoteView(name: $name).toolbar(.hidden)
+//                    QuoteView(name: $name).toolbar(.hidden)
                 }, label: {
                     Text("Continue")
                         .foregroundStyle(.white)
@@ -61,7 +65,34 @@ var ContentView: some View {
                 })
             }
         }
+       
     }
+    
+    
+    func execute() {
+        print("execute called")
+    }
+    
+    func tapAction() {
+        print("tapAction called")
+    }
+    
+    func contextAction() {
+        print("contextAction called")
+    }
+    
+    func toggleValueChanged(_ newValue: Bool) {
+        print("Toggle value \(newValue)")
+    }
+    
+    func sliderValueChanged(_ newValue: Float) {
+        print("Slider value \(newValue)")
+    }
+    
+    func performDragAction() {
+        print("drag action performed")
+    }
+    
 }
 
 
