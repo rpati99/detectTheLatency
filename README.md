@@ -1,5 +1,7 @@
 # detectTheLatency
 
+(Current status inactive:- referenced to https://github.com/rpati99/timingMacro) 
+
 This Swift project aims to detect the execution of time of code upon user tap interaction with the SwiftUI elements. 
 
 The project is based on the approach of:- (current status: Tentative)
