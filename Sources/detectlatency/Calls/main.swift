@@ -4,7 +4,7 @@ import Foundation // Using Swift APIs
 import SwiftSyntaxBuilder // Generate code 
 
 // Declaring the parser
-private func processParsingWith(file: String) {
+private func processParsingWith(file: String) -> SourceFileSyntax? {
     let fileContents: String
     let fileURL = URL(filePath: file)
     
@@ -16,19 +16,37 @@ private func processParsingWith(file: String) {
         // Declaring parser
         let parsedContent = Parser.parse(source: processedFileContent)
         
-        // Declaring modifier that visits the parsed syntax tree with the logic
-        let visitorViewModifier = CodeExtractorService(viewMode: .all)
+        return parsedContent
         
-        // Initating the code extraction
-        visitorViewModifier.walk(parsedContent)
+
         
     } catch let error {
         print("Error processing file contents \(error.localizedDescription)")
     }
+    return nil
+}
+
+private func applyCodeExtractorService(parsedContent: SourceFileSyntax) {
+    // Declaring modifier that visits the parsed syntax tree with the logic
+    let visitorViewModifier = CodeExtractorService(viewMode: .all)
+    
+    // Initating the code extraction
+    visitorViewModifier.walk(parsedContent)
 }
 
 // Fetching the user defined code
-processParsingWith(file: "/Users/rp/detectlatency/Sources/detectlatency/TestFile.swift")
+if let parsedCode = processParsingWith(file: "/Users/rp/detectlatency/Sources/detectlatency/TestFile.swift") {
+    applyCodeExtractorService(parsedContent: parsedCode)
+}
+
+
+
+
+/*
+ 
+ 
+ 
+ */
 //
 //
 //
