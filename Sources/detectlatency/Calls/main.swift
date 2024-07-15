@@ -35,18 +35,25 @@ private func applyCodeExtractorService(parsedContent: SourceFileSyntax) {
 }
 
 // Fetching the user defined code
+
 if let parsedCode = processParsingWith(file: "/Users/rp/detectlatency/Sources/detectlatency/TestFile.swift") {
     applyCodeExtractorService(parsedContent: parsedCode)
 }
+processParsingWith(file: "/Users/rp/detectlatency/Sources/detectlatency/TestFile.swift")
 
+let sourceCode  = """
+    {
+        print("1 + 2 = 3")
+        var c = 4
+        debugPrint("Hi")
+    }
+"""
 
+let parseDemoCode = Parser.parse(source: sourceCode)
+let codeRewriter = TimingCodeInserter()
+let newCode = codeRewriter.visit(parseDemoCode)
+print(newCode)
 
-
-/*
- 
- 
- 
- */
 //
 //
 //
