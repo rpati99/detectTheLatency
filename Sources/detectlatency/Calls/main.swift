@@ -29,6 +29,19 @@ private func processParsingWith(file: String) {
 
 // Fetching the user defined code
 processParsingWith(file: "/Users/rp/detectlatency/Sources/detectlatency/TestFile.swift")
+
+let sourceCode  = """
+    {
+        print("1 + 2 = 3")
+        var c = 4
+        debugPrint("Hi")
+    }
+"""
+
+let parseDemoCode = Parser.parse(source: sourceCode)
+let codeRewriter = TimingCodeInserter()
+let newCode = codeRewriter.visit(parseDemoCode)
+print(newCode)
 //
 //
 //
