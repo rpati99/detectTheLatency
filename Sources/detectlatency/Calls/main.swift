@@ -39,7 +39,7 @@ private func applyCodeExtractorService(parsedContent: SourceFileSyntax) {
 if let parsedCode = processParsingWith(file: "/Users/rp/detectlatency/Sources/detectlatency/TestFile.swift") {
     applyCodeExtractorService(parsedContent: parsedCode)
 }
-processParsingWith(file: "/Users/rp/detectlatency/Sources/detectlatency/TestFile.swift")
+//processParsingWith(file: "/Users/rp/detectlatency/Sources/detectlatency/TestFile.swift")
 
 let sourceCode  = """
     {
