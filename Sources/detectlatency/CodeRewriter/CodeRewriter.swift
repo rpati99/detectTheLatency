@@ -15,6 +15,7 @@ class TimingCodeInserter: SyntaxRewriter {
     override func visit(_ node: ClosureExprSyntax) -> ExprSyntax {
         // The timing code as a string
         let timingCode = """
+        
         let startTime = DispatchTime.now()
         defer {
             let endTime = DispatchTime.now()

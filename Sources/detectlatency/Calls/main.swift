@@ -3,6 +3,7 @@ import SwiftSyntax // For incorporating filtering logic for code detection
 import Foundation // Using Swift APIs
 import SwiftSyntaxBuilder // Generate code 
 
+
 // Declaring the parser
 private func processParsingWith(file: String) -> SourceFileSyntax? {
     let fileContents: String
@@ -32,27 +33,57 @@ private func applyCodeExtractorService(parsedContent: SourceFileSyntax) {
     
     // Initating the code extraction
     visitorViewModifier.walk(parsedContent)
+    
+
+    
+    for closure in visitorViewModifier.closureNodes {
+        let inserter = TimingCodeInserter()
+        let newClosure = inserter.visit(closure)
+        
+        var currentNode: Syntax? = closure.parent
+        var parent_FCEXPRSYNTAX : FunctionCallExprSyntax? = nil
+        
+        while let node = currentNode {
+            if let functionCall = node.as(FunctionCallExprSyntax.self) {
+                parent_FCEXPRSYNTAX = functionCall
+                break
+            }
+            currentNode = node.parent
+        }
+        
+        print(newClosure)
+
+       
+        
+        
+        
+   
+    }
+
+
+    
+
 }
 
 // Fetching the user defined code
-
 if let parsedCode = processParsingWith(file: "/Users/rp/detectlatency/Sources/detectlatency/TestFile.swift") {
+   
     applyCodeExtractorService(parsedContent: parsedCode)
 }
 //processParsingWith(file: "/Users/rp/detectlatency/Sources/detectlatency/TestFile.swift")
 
-let sourceCode  = """
-    {
-        print("1 + 2 = 3")
-        var c = 4
-        debugPrint("Hi")
-    }
-"""
-
-let parseDemoCode = Parser.parse(source: sourceCode)
-let codeRewriter = TimingCodeInserter()
-let newCode = codeRewriter.visit(parseDemoCode)
-print(newCode)
+//let sourceCode  = """
+//    {
+//        print("1 + 2 = 3")
+//        var c = 4
+//        debugPrint("Hi")
+//    }
+//"""
+//
+//let parseDemoCode = Parser.parse(source: sourceCode)
+//let codeRewriter = TimingCodeInserter()
+//let newCode = codeRewriter.visit(parseDemoCode)
+//print(newCode)
 
 //
 //
