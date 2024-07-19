@@ -5,7 +5,7 @@ import SwiftSyntaxBuilder // Generate code
 
 
 // Declaring the parser
-private func processParsingWith(file: String) -> SourceFileSyntax? {
+private func processParsingWith(file: String)  {
     let fileContents: String
     let fileURL = URL(filePath: file)
     
@@ -17,59 +17,85 @@ private func processParsingWith(file: String) -> SourceFileSyntax? {
         // Declaring parser
         let parsedContent = Parser.parse(source: processedFileContent)
         
-        return parsedContent
+        applyCodeExtractorService(parsedContent: parsedContent, filePath: file)
         
 
         
     } catch let error {
         print("Error processing file contents \(error.localizedDescription)")
     }
-    return nil
 }
 
-private func applyCodeExtractorService(parsedContent: SourceFileSyntax) {
+class ClosureReplacer : SyntaxRewriter {
+    let closureReplacement: [ClosureExprSyntax: ClosureExprSyntax]
+    
+    init(closureReplacement: [ClosureExprSyntax: ClosureExprSyntax]) {
+        self.closureReplacement = closureReplacement
+    }
+    
+    override func visit(_ node: ClosureExprSyntax) -> ExprSyntax {
+        if let newClosure = closureReplacement[node] {
+            return newClosure.as(ExprSyntax.self)!
+        }
+        return super.visit(node)
+    }
+}
+
+private func applyCodeExtractorService(parsedContent: SourceFileSyntax, filePath: String) {
     // Declaring modifier that visits the parsed syntax tree with the logic
     let visitorViewModifier = CodeExtractorService(viewMode: .all)
     
     // Initating the code extraction
     visitorViewModifier.walk(parsedContent)
-    
+    var closureReplacement : [ClosureExprSyntax: ClosureExprSyntax] = [:]
 
     
     for closure in visitorViewModifier.closureNodes {
         let inserter = TimingCodeInserter()
-        let newClosure = inserter.visit(closure)
-        
-        var currentNode: Syntax? = closure.parent
-        var parent_FCEXPRSYNTAX : FunctionCallExprSyntax? = nil
-        
-        while let node = currentNode {
-            if let functionCall = node.as(FunctionCallExprSyntax.self) {
-                parent_FCEXPRSYNTAX = functionCall
-                break
-            }
-            currentNode = node.parent
-        }
-        
-        print(newClosure)
-
-       
-        
-        
-        
-   
+        let newClosure = inserter.visit(closure).as(ClosureExprSyntax.self)!
+        closureReplacement[closure] = newClosure
+//        var currentNode: Syntax? = closure.parent
+//        var parent_FCEXPRSYNTAX : FunctionCallExprSyntax? = nil
+//        
+//        while let node = currentNode {
+//            if let functionCall = node.as(FunctionCallExprSyntax.self) {
+//                parent_FCEXPRSYNTAX = functionCall
+//                break
+//            }
+//            currentNode = node.parent
+//        }
+//        
+//        print("------------------")
+//        print(newClosure)
+//        print("------------------")
+//        if let parent = parent_FCEXPRSYNTAX {
+//            print("closure parent is \(parent)")
+//        }
     }
+    
+    let replacer = ClosureReplacer(closureReplacement: closureReplacement)
+    let newContent = replacer.visit(parsedContent).as(SourceFileSyntax.self)!
+    writeModifiedCodeToSourceFile(newContent, on: filePath)
 
 
     
 
 }
 
-// Fetching the user defined code
-if let parsedCode = processParsingWith(file: "/Users/rp/detectlatency/Sources/detectlatency/TestFile.swift") {
-   
-    applyCodeExtractorService(parsedContent: parsedCode)
+func writeModifiedCodeToSourceFile(_ modifiedContent: SourceFileSyntax, on path: String) {
+    let url = URL(filePath: path)
+    let modifiedSourceCode = modifiedContent.description
+    
+    do {
+        try modifiedSourceCode.write(to: url, atomically: true, encoding: .utf8)
+        print("Successfully added profiled code")
+    } catch let writeError {
+        print("Error writing file: \(writeError.localizedDescription)")
+    }
 }
+
+// Fetching the user defined code
+processParsingWith(file: "/Users/rp/detectlatency/Sources/detectlatency/TestFile.swift")
 //processParsingWith(file: "/Users/rp/detectlatency/Sources/detectlatency/TestFile.swift")
 
 //let sourceCode  = """

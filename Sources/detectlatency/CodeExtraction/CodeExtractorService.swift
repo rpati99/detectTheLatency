@@ -8,7 +8,7 @@
 import Foundation
 import SwiftSyntax
 
-
+//TODO:- In place addition of mutated code. 
 // Service that iterates over the source tree and contains logic that provides the code snippet that will be running upon user interaction
 class CodeExtractorService: SyntaxVisitor {
     // Set that contains keywords that will only process closures required, TODO:- change to view and build another one that is ViewModifier
@@ -43,7 +43,7 @@ class CodeExtractorService: SyntaxVisitor {
             
             // Condition that checks if it fits in the desired bracket and only processes when affirmative
             if interactiveViewModifiersList.contains(memberAccess.declName.baseName.text) { // MemberAccessExprsyntax -> trailing closure syntax
-                let modifierName = memberAccess.declName.baseName.text
+//                let modifierName = memberAccess.declName.baseName.text
                 // print("Detected view modifier: \(modifierName)")
                 
                 // Check if there's a trailing closure directly associated with the view modifier
@@ -88,15 +88,17 @@ class CodeExtractorService: SyntaxVisitor {
         
         
         for (index, argument) in node.arguments.enumerated() {
-            if component == "NavigationLink" && index == 0 {
-                if let closure = argument.toClosure {
-                    closureNodes.append(closure)
-//                    print("inserted timing code,Navigation link closure code detected, \(insertTimingCode(into: closure).description)")
-//                    print("Navigation link closure code detected \(closure.description)")
-                }
-                
-                closureFound = true
-            } else if component == "Button" {
+            //FOR NOW:- COMMENTING THIS OUT FOR NOW
+//            if component == "NavigationLink" && index == 0 {
+//                if let closure = argument.toClosure {
+//                    closureNodes.append(closure)
+////                    print("inserted timing code,Navigation link closure code detected, \(insertTimingCode(into: closure).description)")
+////                    print("Navigation link closure code detected \(closure.description)")
+//                }
+//                
+//                closureFound = true
+//            } else 
+            if component == "Button" {
                 if let _ = argument.label?.text.contains("action") {
                     if let closure = argument.toClosure {
                         closureNodes.append(closure)

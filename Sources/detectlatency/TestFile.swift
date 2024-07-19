@@ -19,6 +19,13 @@ struct ContentView: View {
             ZStack {
                 VStack {
                     Button {
+let startTime = DispatchTime.now()
+defer {
+    let endTime = DispatchTime.now()
+    let timeInNanoSec = endTime.uptimeNanoseconds - startTime.uptimeNanoseconds
+    let timeInSec = Double(timeInNanoSec) / 1_000_000_000
+    debugPrint(timeInSec)
+}
                         execute()
                     } label: {
                         Text("label")
@@ -26,12 +33,26 @@ struct ContentView: View {
                     
                     Text("Tap me")
                         .onTapGesture {
+let startTime = DispatchTime.now()
+defer {
+    let endTime = DispatchTime.now()
+    let timeInNanoSec = endTime.uptimeNanoseconds - startTime.uptimeNanoseconds
+    let timeInSec = Double(timeInNanoSec) / 1_000_000_000
+    debugPrint(timeInSec)
+}
                             tapAction()
                         }
                     
                     Text("Long press me")
                         .contextMenu {
                             Button(action: {
+let startTime = DispatchTime.now()
+defer {
+    let endTime = DispatchTime.now()
+    let timeInNanoSec = endTime.uptimeNanoseconds - startTime.uptimeNanoseconds
+    let timeInSec = Double(timeInNanoSec) / 1_000_000_000
+    debugPrint(timeInSec)
+}
                                 contextAction()
                             }) {
                                 Text("Perform action")
@@ -42,16 +63,37 @@ struct ContentView: View {
                         Text("Toggle me")
                     }
                     .onChange(of: isToggled) { newValue in
+let startTime = DispatchTime.now()
+defer {
+    let endTime = DispatchTime.now()
+    let timeInNanoSec = endTime.uptimeNanoseconds - startTime.uptimeNanoseconds
+    let timeInSec = Double(timeInNanoSec) / 1_000_000_000
+    debugPrint(timeInSec)
+}
                         toggleValueChanged(newValue)
                     }
                     
                     Slider(value: $sliderValue, in: 0...100, step: 1)
                         .onChange(of: sliderValue) { newValue in
+let startTime = DispatchTime.now()
+defer {
+    let endTime = DispatchTime.now()
+    let timeInNanoSec = endTime.uptimeNanoseconds - startTime.uptimeNanoseconds
+    let timeInSec = Double(timeInNanoSec) / 1_000_000_000
+    debugPrint(timeInSec)
+}
                             sliderValueChanged(newValue)
                         }
                     
                     Text("Drag me")
                         .onDrag {
+let startTime = DispatchTime.now()
+defer {
+    let endTime = DispatchTime.now()
+    let timeInNanoSec = endTime.uptimeNanoseconds - startTime.uptimeNanoseconds
+    let timeInSec = Double(timeInNanoSec) / 1_000_000_000
+    debugPrint(timeInSec)
+}
                             performDragAction()
                             return NSItemProvider(object: "DragData" as NSString)
                         }
