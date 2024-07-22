@@ -1,17 +1,17 @@
 # detectTheLatency
 
-**[CodeGen resource](https://github.com/rpati99/timingMacro)**
-
-*This Swift project aims to detect the execution of time of code upon user tap interaction with the SwiftUI elements.* 
-
-The project is based on the approach of:- 
-
-- Incorporating Static Analysis using SwiftSyntax to detect and extract desired code.
-
-- Utilizing code generation methods using SwiftSyntaxBuilder to add time profiling code along with the extracted code.
-
-- Integrate the code into the existing files into the iOS codebase. 
-
-- CLI support 
+*Swift package that performs to measurement of the execution time of the code which is to be ran upon user interaction.* 
 
 
+**This package utilizes following principles to perform the objective using SwiftSyntax.**
+
+- Combination of Static and Dynamic analysis.
+
+- Code Detection (SyntaxVisitor).
+
+- Code Generation[[1]](https://www.github.com/rpati99/timingMacro) (SwiftSyntax + Macros)
+
+- Code Insertion (SyntaxRewriter)
+
+
+*[1] Macro that measures execution time of any input code.*
