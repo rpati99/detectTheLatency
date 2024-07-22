@@ -22,13 +22,6 @@ struct ContentView: View {
                     
                     //SwiftUI element that contains a function
                     Button {
-        let startTime = DispatchTime.now()
-        defer {
-            let endTime = DispatchTime.now()
-            let timeInNanoSec = endTime.uptimeNanoseconds - startTime.uptimeNanoseconds
-            let timeInSec = Double(timeInNanoSec) / 1_000_000_000
-            debugPrint(timeInSec)
-        }
                         execute()
                     } label: {
                         Text("label")
@@ -37,13 +30,6 @@ struct ContentView: View {
                     //SwiftUI element that contains a function that is enclosed inside a loop
                     Text("Tap me")
                         .onTapGesture {
-        let startTime = DispatchTime.now()
-        defer {
-            let endTime = DispatchTime.now()
-            let timeInNanoSec = endTime.uptimeNanoseconds - startTime.uptimeNanoseconds
-            let timeInSec = Double(timeInNanoSec) / 1_000_000_000
-            debugPrint(timeInSec)
-        }
                             for i in 1...5 {
                                 print("Loop iteration \(i)")
                                 loopNestedFunction(i)
@@ -56,13 +42,6 @@ struct ContentView: View {
                     Text("Long press me")
                         .contextMenu {
                             Button(action: {
-        let startTime = DispatchTime.now()
-        defer {
-            let endTime = DispatchTime.now()
-            let timeInNanoSec = endTime.uptimeNanoseconds - startTime.uptimeNanoseconds
-            let timeInSec = Double(timeInNanoSec) / 1_000_000_000
-            debugPrint(timeInSec)
-        }
                                 for i in 1...5 {
                                     print("Loop iteration \(i)")
                                     loopNestedFunction(i)
@@ -79,13 +58,6 @@ struct ContentView: View {
                         Text("Toggle me")
                     }
                     .onChange(of: isToggled) { newValue in
-        let startTime = DispatchTime.now()
-        defer {
-            let endTime = DispatchTime.now()
-            let timeInNanoSec = endTime.uptimeNanoseconds - startTime.uptimeNanoseconds
-            let timeInSec = Double(timeInNanoSec) / 1_000_000_000
-            debugPrint(timeInSec)
-        }
                         toggleValueChanged(newValue)
                         checkToggleCondition(newValue)
                     }
@@ -93,13 +65,6 @@ struct ContentView: View {
                     //SwiftUI element that contains the looping mechanism to initiate calling that contains 2 methods
                     Slider(value: $sliderValue, in: 0...100, step: 1)
                         .onChange(of: sliderValue) { newValue in
-        let startTime = DispatchTime.now()
-        defer {
-            let endTime = DispatchTime.now()
-            let timeInNanoSec = endTime.uptimeNanoseconds - startTime.uptimeNanoseconds
-            let timeInSec = Double(timeInNanoSec) / 1_000_000_000
-            debugPrint(timeInSec)
-        }
                             sliderValueChanged(newValue)
                             adjustSliderBasedOnValue(newValue)
                         }
@@ -107,13 +72,6 @@ struct ContentView: View {
                     //SwiftUI element that contains a method
                     Text("Drag me")
                         .onDrag {
-        let startTime = DispatchTime.now()
-        defer {
-            let endTime = DispatchTime.now()
-            let timeInNanoSec = endTime.uptimeNanoseconds - startTime.uptimeNanoseconds
-            let timeInSec = Double(timeInNanoSec) / 1_000_000_000
-            debugPrint(timeInSec)
-        }
                             performDragAction()
                             return NSItemProvider(object: "DragData" as NSString)
                         }
@@ -125,13 +83,6 @@ struct ContentView: View {
                     //SwiftUI element that contains asynchronous executable and
                     //an execution code inside it as an anonymous function (closure)
                     Button("Fetch Data") {
-        let startTime = DispatchTime.now()
-        defer {
-            let endTime = DispatchTime.now()
-            let timeInNanoSec = endTime.uptimeNanoseconds - startTime.uptimeNanoseconds
-            let timeInSec = Double(timeInNanoSec) / 1_000_000_000
-            debugPrint(timeInSec)
-        }
                         Task {
                             await fetchData({
                                 print("Completion called")

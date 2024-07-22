@@ -2,6 +2,7 @@
 import PackageDescription
 
 let package = Package(
+   
     name: "detectlatency",
     platforms: [
         .macOS(.v13)
@@ -27,6 +28,7 @@ let package = Package(
                 .product(name: "SwiftSyntaxBuilder", package: "swift-syntax")
             ],
             path: "Sources/detectlatency"  // Path to the directory containing 'main.swift'
+            
         )
     ]
 )

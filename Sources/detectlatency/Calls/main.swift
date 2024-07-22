@@ -4,10 +4,26 @@ import Foundation // Using Swift APIs
 import SwiftSyntaxBuilder // Generate code 
 
 
+
+func findSwiftFiles(in directory: String) -> [String] {
+    let fileManager = FileManager.default
+    var swiftFiles: [String] = []
+
+    if let enumerator = fileManager.enumerator(atPath: directory) {
+        for case let file as String in enumerator {
+            if file.hasSuffix(".swift") {
+                let fullPath = (directory as NSString).appendingPathComponent(file)
+                swiftFiles.append(fullPath)
+            }
+        }
+    }
+    
+    return swiftFiles
+}
+
 // Declaring the parser
-private func processParsingWith(file: String)  {
+private func processParsingWith(fileURL: URL)  {
     let fileContents: String
-    let fileURL = URL(filePath: file)
     
     do {
         fileContents = try String.init(contentsOf: fileURL, encoding: .utf8)
@@ -17,7 +33,7 @@ private func processParsingWith(file: String)  {
         // Declaring parser
         let parsedContent = Parser.parse(source: processedFileContent)
         
-        applyCodeExtractorService(parsedContent: parsedContent, filePath: file)
+        applyCodeExtractorService(parsedContent: parsedContent, filepath: fileURL)
         
 
         
@@ -41,7 +57,7 @@ class ClosureReplacer : SyntaxRewriter {
     }
 }
 
-private func applyCodeExtractorService(parsedContent: SourceFileSyntax, filePath: String) {
+private func applyCodeExtractorService(parsedContent: SourceFileSyntax, filepath: URL) {
     // Declaring modifier that visits the parsed syntax tree with the logic
     let visitorViewModifier = CodeExtractorService(viewMode: .all)
     
@@ -75,15 +91,14 @@ private func applyCodeExtractorService(parsedContent: SourceFileSyntax, filePath
     
     let replacer = ClosureReplacer(closureReplacement: closureReplacement)
     let newContent = replacer.visit(parsedContent).as(SourceFileSyntax.self)!
-    writeModifiedCodeToSourceFile(newContent, on: filePath)
+    writeModifiedCodeToSourceFile(newContent, to: filepath)
 
 
     
 
 }
 
-func writeModifiedCodeToSourceFile(_ modifiedContent: SourceFileSyntax, on path: String) {
-    let url = URL(filePath: path)
+func writeModifiedCodeToSourceFile(_ modifiedContent: SourceFileSyntax, to url: URL) {
     let modifiedSourceCode = modifiedContent.description
     
     do {
@@ -95,7 +110,51 @@ func writeModifiedCodeToSourceFile(_ modifiedContent: SourceFileSyntax, on path:
 }
 
 // Fetching the user defined code
-processParsingWith(file: "/Users/rp/detectlatency/Sources/detectlatency/TestFile.swift")
+//processParsingWith(file: "/Users/rp/detectlatency/Sources/detectlatency/TestFile.swift")
+
+
+func findSwiftFiles(in directory: String) -> [URL] {
+    let fileManager = FileManager.default
+    var swiftFiles: [URL] = []
+    
+    if let enumerator = fileManager.enumerator(atPath: directory) {
+        for case let file as String in enumerator {
+            if file.hasSuffix(".swift") {
+                let fullPath = URL(fileURLWithPath: directory).appendingPathComponent(file)
+                swiftFiles.append(fullPath)
+            }
+        }
+    }
+    
+    return swiftFiles
+}
+
+func processAllSwiftFiles(in directory: String) {
+    let swiftFiles: [URL] = findSwiftFiles(in: directory)
+    
+    for fileURL in swiftFiles {
+        processParsingWith(fileURL: fileURL)
+    }
+}
+
+// Example main function to run the tool
+func main() {
+    let arguments = CommandLine.arguments
+    guard arguments.count > 1 else {
+        print("Usage: detectlatency <path-to-xcode-project>")
+        return
+    }
+    
+    let projectDirectory = arguments[1]
+    processAllSwiftFiles(in: projectDirectory)
+}
+
+// Call the main function
+main()
+
+
+
+
 //processParsingWith(file: "/Users/rp/detectlatency/Sources/detectlatency/TestFile.swift")
 
 //let sourceCode  = """
