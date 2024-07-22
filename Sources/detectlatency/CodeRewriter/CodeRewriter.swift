@@ -15,13 +15,14 @@ class TimingCodeInserter: SyntaxRewriter {
     override func visit(_ node: ClosureExprSyntax) -> ExprSyntax {
         // The timing code as a string
         let timingCode = """
-        let startTime = DispatchTime.now()
-        defer {
-            let endTime = DispatchTime.now()
-            let timeInNanoSec = endTime.uptimeNanoseconds - startTime.uptimeNanoseconds
-            let timeInSec = Double(timeInNanoSec) / 1_000_000_000
-            debugPrint(timeInSec)
-        }
+        
+                let startTime = DispatchTime.now()
+                defer {
+                    let endTime = DispatchTime.now()
+                    let timeInNanoSec = endTime.uptimeNanoseconds - startTime.uptimeNanoseconds
+                    let timeInSec = Double(timeInNanoSec) / 1_000_000_000
+                    debugPrint(timeInSec)
+                }
         """
         
         let timingCodeStatement = Parser.parse(source: timingCode).statements

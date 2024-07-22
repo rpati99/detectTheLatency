@@ -3,10 +3,27 @@ import SwiftSyntax // For incorporating filtering logic for code detection
 import Foundation // Using Swift APIs
 import SwiftSyntaxBuilder // Generate code 
 
+
+
+func findSwiftFiles(in directory: String) -> [String] {
+    let fileManager = FileManager.default
+    var swiftFiles: [String] = []
+
+    if let enumerator = fileManager.enumerator(atPath: directory) {
+        for case let file as String in enumerator {
+            if file.hasSuffix(".swift") {
+                let fullPath = (directory as NSString).appendingPathComponent(file)
+                swiftFiles.append(fullPath)
+            }
+        }
+    }
+    
+    return swiftFiles
+}
+
 // Declaring the parser
-private func processParsingWith(file: String) {
+private func processParsingWith(fileURL: URL)  {
     let fileContents: String
-    let fileURL = URL(filePath: file)
     
     do {
         fileContents = try String.init(contentsOf: fileURL, encoding: .utf8)
@@ -16,32 +33,143 @@ private func processParsingWith(file: String) {
         // Declaring parser
         let parsedContent = Parser.parse(source: processedFileContent)
         
-        // Declaring modifier that visits the parsed syntax tree with the logic
-        let visitorViewModifier = CodeExtractorService(viewMode: .all)
+        applyCodeExtractorService(parsedContent: parsedContent, filepath: fileURL)
         
-        // Initating the code extraction
-        visitorViewModifier.walk(parsedContent)
+
         
     } catch let error {
         print("Error processing file contents \(error.localizedDescription)")
     }
 }
 
-// Fetching the user defined code
-processParsingWith(file: "/Users/rp/detectlatency/Sources/detectlatency/TestFile.swift")
-
-let sourceCode  = """
-    {
-        print("1 + 2 = 3")
-        var c = 4
-        debugPrint("Hi")
+class ClosureReplacer : SyntaxRewriter {
+    let closureReplacement: [ClosureExprSyntax: ClosureExprSyntax]
+    
+    init(closureReplacement: [ClosureExprSyntax: ClosureExprSyntax]) {
+        self.closureReplacement = closureReplacement
     }
-"""
+    
+    override func visit(_ node: ClosureExprSyntax) -> ExprSyntax {
+        if let newClosure = closureReplacement[node] {
+            return newClosure.as(ExprSyntax.self)!
+        }
+        return super.visit(node)
+    }
+}
 
-let parseDemoCode = Parser.parse(source: sourceCode)
-let codeRewriter = TimingCodeInserter()
-let newCode = codeRewriter.visit(parseDemoCode)
-print(newCode)
+private func applyCodeExtractorService(parsedContent: SourceFileSyntax, filepath: URL) {
+    // Declaring modifier that visits the parsed syntax tree with the logic
+    let visitorViewModifier = CodeExtractorService(viewMode: .all)
+    
+    // Initating the code extraction
+    visitorViewModifier.walk(parsedContent)
+    var closureReplacement : [ClosureExprSyntax: ClosureExprSyntax] = [:]
+
+    
+    for closure in visitorViewModifier.closureNodes {
+        let inserter = TimingCodeInserter()
+        let newClosure = inserter.visit(closure).as(ClosureExprSyntax.self)!
+        closureReplacement[closure] = newClosure
+//        var currentNode: Syntax? = closure.parent
+//        var parent_FCEXPRSYNTAX : FunctionCallExprSyntax? = nil
+//        
+//        while let node = currentNode {
+//            if let functionCall = node.as(FunctionCallExprSyntax.self) {
+//                parent_FCEXPRSYNTAX = functionCall
+//                break
+//            }
+//            currentNode = node.parent
+//        }
+//        
+//        print("------------------")
+//        print(newClosure)
+//        print("------------------")
+//        if let parent = parent_FCEXPRSYNTAX {
+//            print("closure parent is \(parent)")
+//        }
+    }
+    
+    let replacer = ClosureReplacer(closureReplacement: closureReplacement)
+    let newContent = replacer.visit(parsedContent).as(SourceFileSyntax.self)!
+    writeModifiedCodeToSourceFile(newContent, to: filepath)
+
+
+    
+
+}
+
+func writeModifiedCodeToSourceFile(_ modifiedContent: SourceFileSyntax, to url: URL) {
+    let modifiedSourceCode = modifiedContent.description
+    
+    do {
+        try modifiedSourceCode.write(to: url, atomically: true, encoding: .utf8)
+        print("Successfully added profiled code")
+    } catch let writeError {
+        print("Error writing file: \(writeError.localizedDescription)")
+    }
+}
+
+// Fetching the user defined code
+//processParsingWith(file: "/Users/rp/detectlatency/Sources/detectlatency/TestFile.swift")
+
+
+func findSwiftFiles(in directory: String) -> [URL] {
+    let fileManager = FileManager.default
+    var swiftFiles: [URL] = []
+    
+    if let enumerator = fileManager.enumerator(atPath: directory) {
+        for case let file as String in enumerator {
+            if file.hasSuffix(".swift") {
+                let fullPath = URL(fileURLWithPath: directory).appendingPathComponent(file)
+                swiftFiles.append(fullPath)
+            }
+        }
+    }
+    
+    return swiftFiles
+}
+
+func processAllSwiftFiles(in directory: String) {
+    let swiftFiles: [URL] = findSwiftFiles(in: directory)
+    
+    for fileURL in swiftFiles {
+        processParsingWith(fileURL: fileURL)
+    }
+}
+
+// Example main function to run the tool
+func main() {
+    let arguments = CommandLine.arguments
+    guard arguments.count > 1 else {
+        print("Usage: detectlatency <path-to-xcode-project>")
+        return
+    }
+    
+    let projectDirectory = arguments[1]
+    processAllSwiftFiles(in: projectDirectory)
+}
+
+// Call the main function
+main()
+
+
+
+
+//processParsingWith(file: "/Users/rp/detectlatency/Sources/detectlatency/TestFile.swift")
+
+//let sourceCode  = """
+//    {
+//        print("1 + 2 = 3")
+//        var c = 4
+//        debugPrint("Hi")
+//    }
+//"""
+//
+//let parseDemoCode = Parser.parse(source: sourceCode)
+//let codeRewriter = TimingCodeInserter()
+//let newCode = codeRewriter.visit(parseDemoCode)
+//print(newCode)
+
 //
 //
 //

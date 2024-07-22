@@ -14,3 +14,5 @@ extension LabeledExprSyntax {
         return self.expression.as(ClosureExprSyntax.self)
     }
 }
+
+

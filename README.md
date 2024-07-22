@@ -1,5 +1,4 @@
 # detectTheLatency
-(Status:- In progress)
 
 
 

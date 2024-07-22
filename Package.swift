@@ -2,6 +2,7 @@
 import PackageDescription
 
 let package = Package(
+   
     name: "detectlatency",
     platforms: [
         .macOS(.v13)
@@ -15,7 +16,7 @@ let package = Package(
     ],
     dependencies: [
         // Dependencies declare other packages that this package depends on.
-        .package(url: "https://github.com/apple/swift-syntax.git", branch: "main")
+        .package(url: "https://github.com/apple/swift-syntax.git", from: "509.0.0")
     ],
     targets: [
         // Declare this as an executable target since 'main.swift' is present.
@@ -27,6 +28,7 @@ let package = Package(
                 .product(name: "SwiftSyntaxBuilder", package: "swift-syntax")
             ],
             path: "Sources/detectlatency"  // Path to the directory containing 'main.swift'
+            
         )
     ]
 )
