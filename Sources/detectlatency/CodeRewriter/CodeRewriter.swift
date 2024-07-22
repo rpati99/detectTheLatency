@@ -33,6 +33,6 @@ class TimingCodeInserter: SyntaxRewriter {
 
         let newBody = node.with(\.statements, newStatements)
         
-        return newBody.as(ExprSyntax.self)!
+        return ExprSyntax.init(newBody)
     }
 }
