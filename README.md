@@ -15,3 +15,21 @@
 
 
 *[1] Macro that measures execution time of any input code.*
+
+
+## Usage 
+
+**CLI** 
+
+1. Build the package 
+
+`swift build`
+
+2. Run the package 
+
+`swift run detectlatency <path-to-Xcode-proj-folder>`
+
+
+
+
+
