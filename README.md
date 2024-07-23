@@ -1,6 +1,6 @@
 # detectTheLatency
 
-*Swift package that performs to measurement of the execution time of the code which is to be ran upon user interaction.* 
+*Swift package that measures execution time of the code which is to be ran upon user interaction.* 
 
 
 **This package utilizes following principles to perform the objective using SwiftSyntax.**
