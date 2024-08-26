@@ -87,7 +87,7 @@ class CodeExtractorService: SyntaxVisitor {
         }
         
         
-        for (index, argument) in node.arguments.enumerated() {
+        for (_, argument) in node.arguments.enumerated() {
             //FOR NOW:- COMMENTING THIS OUT FOR NOW
 //            if component == "NavigationLink" && index == 0 {
 //                if let closure = argument.toClosure {

@@ -3,8 +3,6 @@ import SwiftSyntax // For incorporating filtering logic for code detection
 import Foundation // Using Swift APIs
 import SwiftSyntaxBuilder // Generate code 
 
-
-
 func findSwiftFiles(in directory: String) -> [String] {
     let fileManager = FileManager.default
     var swiftFiles: [String] = []
