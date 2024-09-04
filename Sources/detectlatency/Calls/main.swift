@@ -72,10 +72,10 @@ public struct SwiftFileWriter: SwiftWriteable {
     
 }
 public struct SwiftFileProcessor : SwiftFileProcessable {
-    private let syntaxService: SyntaxModifiable
+    private let syntaxService: SwiftSyntaxModifier
     private let writerService: SwiftFileWriter
     
-    init(syntaxService: SyntaxModifiable, writerService: SwiftFileWriter) {
+    init(syntaxService: SwiftSyntaxModifier, writerService: SwiftFileWriter) {
         self.syntaxService = syntaxService
         self.writerService = writerService
     }
@@ -269,7 +269,6 @@ public class Application {
         
         let swiftFiles = fileFinder.findSwiftFiles(directory: arguments[1])
         fileProcessor.process(files: swiftFiles)
-        
     }
 }
 

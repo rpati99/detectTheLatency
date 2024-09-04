@@ -16,7 +16,7 @@ public final class CodeExtractorService: SyntaxVisitor {
     private let interactiveViewModifiersList: Set<String> = ["onTapGesture", "onChange", "onDrag", "onDelete", "destructive", ]
     
     private var isInsideInteractiveElement = false
-    var closureNodes: [ClosureExprSyntax] = []
+    public var closureNodes: [ClosureExprSyntax] = []
     
     // Handle view closures
     public override func visit(_ node: FunctionCallExprSyntax) -> SyntaxVisitorContinueKind {
