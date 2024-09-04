@@ -3,21 +3,134 @@ import SwiftSyntax // For incorporating filtering logic for code detection
 import Foundation // Using Swift APIs
 import SwiftSyntaxBuilder // Generate code 
 
-func findSwiftFiles(in directory: String) -> [String] {
-    let fileManager = FileManager.default
-    var swiftFiles: [String] = []
+protocol SwiftFileLocatable {
+    func findSwiftFiles(directory: String) -> [URL]
+}
 
-    if let enumerator = fileManager.enumerator(atPath: directory) {
-        for case let file as String in enumerator {
-            if file.hasSuffix(".swift") {
-                let fullPath = (directory as NSString).appendingPathComponent(file)
-                swiftFiles.append(fullPath)
+protocol SwiftFileProcessable {
+    func process(files: [URL])
+}
+
+protocol SyntaxModifiable {
+    func modifySyntax(of parsedContent: SourceFileSyntax, filePath: URL) -> SourceFileSyntax
+}
+
+protocol SwiftWriteable {
+    func writeModifiedCodeToSourceFile(_ modifiedContent: SourceFileSyntax, to url: URL)
+}
+
+struct SwiftFileFinder: SwiftFileLocatable {
+    func findSwiftFiles(directory: String) -> [URL] {
+        let fileManager = FileManager.default
+        var swiftFiles: [URL] = []
+        
+        if let enumerator = fileManager.enumerator(atPath: directory) {
+            for case let file as String in enumerator {
+                if file.hasSuffix(".swift") {
+                    let fullPath = URL(filePath: directory).appendingPathComponent(file)
+                    swiftFiles.append(fullPath)
+                }
             }
+        }
+        
+        return swiftFiles
+    }
+}
+
+struct SwiftSyntaxModifier: SyntaxModifiable {
+    func modifySyntax(of parsedContent: SourceFileSyntax, filePath: URL) -> SourceFileSyntax {
+        
+        let codeExtractor = CodeExtractorService(viewMode: .all)
+        codeExtractor.walk(parsedContent)
+        
+        var closureReplacement: [ClosureExprSyntax: ClosureExprSyntax] = [:]
+                                 
+        for closure in codeExtractor.closureNodes {
+            let inserter = TimingCodeInserter()
+            let newClosure = inserter.visit(closure).as(ClosureExprSyntax.self)!
+            closureReplacement[closure] = newClosure
+        }
+      
+        let replacer = ClosureReplacer(closureReplacement: closureReplacement)
+        let newContent = replacer.visit(parsedContent).as(SourceFileSyntax.self)!
+        return newContent
+    }
+}
+
+struct SwiftFileWriter: SwiftWriteable {
+    func writeModifiedCodeToSourceFile(_ modifiedContent: SwiftSyntax.SourceFileSyntax, to url: URL) {
+        let modifiedSourceCode = modifiedContent.description
+        
+        do {
+            try modifiedSourceCode.write(to: url, atomically: true, encoding: .utf8)
+            print("Successfully added profiled code")
+        } catch let writeError {
+            print("Error writing file: \(writeError.localizedDescription)")
         }
     }
     
-    return swiftFiles
+    
 }
+struct SwiftFileProcessor : SwiftFileProcessable {
+    private let syntaxService: SyntaxModifiable
+    private let writerService: SwiftFileWriter
+    
+    init(syntaxService: SyntaxModifiable, writerService: SwiftFileWriter) {
+        self.syntaxService = syntaxService
+        self.writerService = writerService
+    }
+    
+    func process(files: [URL]) {
+        files.forEach { fileURL in
+            do {
+                let fileContents = try String.init(contentsOf: fileURL, encoding: .utf8)
+                let processedFileContent = fileContents.trimmingCharacters(in: .whitespacesAndNewlines)
+                let parsedContent = Parser.parse(source: processedFileContent)
+                
+                let modifyContent = syntaxService.modifySyntax(of: parsedContent, filePath: fileURL)
+                
+                writerService.writeModifiedCodeToSourceFile(modifyContent, to: fileURL)
+            
+            } catch let fileProcessingError {
+                debugPrint("Error:- Couldn't process files \(fileProcessingError.localizedDescription)")
+            }
+        }
+//        let fileContents: String
+//        
+//        do {
+//            fileContents = try String.init(contentsOf: fileURL, encoding: .utf8)
+//            //  debugPrint(fileContents.trimmingCharacters(in: .whitespacesAndNewlines))
+//            let processedFileContent = fileContents.trimmingCharacters(in: .whitespacesAndNewlines)
+//            
+//            // Declaring parser
+//            let parsedContent = Parser.parse(source: processedFileContent)
+//            
+//            applyCodeExtractorService(parsedContent: parsedContent, filepath: fileURL)
+//            
+//
+//            
+//        } catch let error {
+//            print("Error processing file contents \(error.localizedDescription)")
+//        }
+    }
+}
+
+//func findSwiftFiles(directory: String) -> [URL] {
+//    let fileManager = FileManager.default
+//    var swiftFiles: [URL] = []
+//    
+//    if let enumerator = fileManager.enumerator(atPath: directory) {
+//        for case let file as String in enumerator {
+//            if file.hasSuffix(".swift") {
+//                let fullPath = URL(fileURLWithPath: directory).appendingPathComponent(file)
+//                swiftFiles.append(fullPath)
+//            }
+//        }
+//    }
+//    
+//    return swiftFiles
+//}
+
 
 // Declaring the parser
 private func processParsingWith(fileURL: URL)  {
@@ -127,29 +240,63 @@ func findSwiftFiles(in directory: String) -> [URL] {
     return swiftFiles
 }
 
-func processAllSwiftFiles(in directory: String) {
-    let swiftFiles: [URL] = findSwiftFiles(in: directory)
+//func processAllSwiftFiles(in directory: String) {
+//    let fileFinder = SwiftFileFinder(directory: directory)
+//    let swiftFiles: [URL] = fileFinder.findSwiftFiles()
+//    
+////    for fileURL in swiftFiles {
+////        processParsingWith(fileURL: fileURL)
+////    }
+//    
+//}
+
+class Application {
+    private let fileFinder: SwiftFileFinder
+    private let fileProcessor: SwiftFileProcessor
+    private let fileWriter: SwiftFileWriter
     
-    for fileURL in swiftFiles {
-        processParsingWith(fileURL: fileURL)
+    init(fileFinder: SwiftFileFinder, fileProcessor: SwiftFileProcessor, fileWriter: SwiftFileWriter) {
+        self.fileFinder = fileFinder
+        self.fileProcessor = fileProcessor
+        self.fileWriter = fileWriter
+    }
+    
+    func run(with arguments: [String]) {
+        guard arguments.count > 1 else {
+            print("Usage: detectlatency <path-to-xcode-project>")
+            return
+        }
+        
+        let swiftFiles = fileFinder.findSwiftFiles(directory: arguments[1])
+        fileProcessor.process(files: swiftFiles)
+        
     }
 }
 
-// Example main function to run the tool
-func main() {
-    let arguments = CommandLine.arguments
-    guard arguments.count > 1 else {
-        print("Usage: detectlatency <path-to-xcode-project>")
-        return
-    }
-    
-    let projectDirectory = arguments[1]
-    processAllSwiftFiles(in: projectDirectory)
-}
+//// Example main function to run the tool
+//func main() {
+//    let arguments = CommandLine.arguments
+//    guard arguments.count > 1 else {
+//        print("Usage: detectlatency <path-to-xcode-project>")
+//        return
+//    }
+//    
+//    let projectDirectory = arguments[1]
+//    processAllSwiftFiles(in: projectDirectory)
+//}
+//
+//// Call the main function
+//main()
 
-// Call the main function
-main()
+let syntaxModifier = SwiftSyntaxModifier()
+let fileWriter = SwiftFileWriter()
+let fileProcessor = SwiftFileProcessor(syntaxService: syntaxModifier, writerService: fileWriter)
+let fileFinder = SwiftFileFinder()
+let application = Application(fileFinder: fileFinder, fileProcessor: fileProcessor, fileWriter: fileWriter)
+application.run(with: CommandLine.arguments)
 
+
+// main -> processAllSwiftFiles -> findSwiftFiles (done) -> prcoessParsingWith -> applyCodeExtractorService -> writeModifiedCodeSourceFile
 
 
 
