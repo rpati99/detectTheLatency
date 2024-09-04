@@ -3,24 +3,24 @@ import SwiftSyntax // For incorporating filtering logic for code detection
 import Foundation // Using Swift APIs
 import SwiftSyntaxBuilder // Generate code 
 
-protocol SwiftFileLocatable {
+public protocol SwiftFileLocatable {
     func findSwiftFiles(directory: String) -> [URL]
 }
 
-protocol SwiftFileProcessable {
+public protocol SwiftFileProcessable {
     func process(files: [URL])
 }
 
-protocol SyntaxModifiable {
+public protocol SyntaxModifiable {
     func modifySyntax(of parsedContent: SourceFileSyntax, filePath: URL) -> SourceFileSyntax
 }
 
-protocol SwiftWriteable {
+public protocol SwiftWriteable {
     func writeModifiedCodeToSourceFile(_ modifiedContent: SourceFileSyntax, to url: URL)
 }
 
-struct SwiftFileFinder: SwiftFileLocatable {
-    func findSwiftFiles(directory: String) -> [URL] {
+public struct SwiftFileFinder: SwiftFileLocatable {
+    public func findSwiftFiles(directory: String) -> [URL] {
         let fileManager = FileManager.default
         var swiftFiles: [URL] = []
         
@@ -37,8 +37,8 @@ struct SwiftFileFinder: SwiftFileLocatable {
     }
 }
 
-struct SwiftSyntaxModifier: SyntaxModifiable {
-    func modifySyntax(of parsedContent: SourceFileSyntax, filePath: URL) -> SourceFileSyntax {
+public struct SwiftSyntaxModifier: SyntaxModifiable {
+    public func modifySyntax(of parsedContent: SourceFileSyntax, filePath: URL) -> SourceFileSyntax {
         
         let codeExtractor = CodeExtractorService(viewMode: .all)
         codeExtractor.walk(parsedContent)
@@ -57,8 +57,8 @@ struct SwiftSyntaxModifier: SyntaxModifiable {
     }
 }
 
-struct SwiftFileWriter: SwiftWriteable {
-    func writeModifiedCodeToSourceFile(_ modifiedContent: SwiftSyntax.SourceFileSyntax, to url: URL) {
+public struct SwiftFileWriter: SwiftWriteable {
+    public func writeModifiedCodeToSourceFile(_ modifiedContent: SwiftSyntax.SourceFileSyntax, to url: URL) {
         let modifiedSourceCode = modifiedContent.description
         
         do {
@@ -71,7 +71,7 @@ struct SwiftFileWriter: SwiftWriteable {
     
     
 }
-struct SwiftFileProcessor : SwiftFileProcessable {
+public struct SwiftFileProcessor : SwiftFileProcessable {
     private let syntaxService: SyntaxModifiable
     private let writerService: SwiftFileWriter
     
@@ -80,7 +80,7 @@ struct SwiftFileProcessor : SwiftFileProcessable {
         self.writerService = writerService
     }
     
-    func process(files: [URL]) {
+    public func process(files: [URL]) {
         files.forEach { fileURL in
             do {
                 let fileContents = try String.init(contentsOf: fileURL, encoding: .utf8)
@@ -153,14 +153,14 @@ private func processParsingWith(fileURL: URL)  {
     }
 }
 
-class ClosureReplacer : SyntaxRewriter {
-    let closureReplacement: [ClosureExprSyntax: ClosureExprSyntax]
+public class ClosureReplacer : SyntaxRewriter {
+    public let closureReplacement: [ClosureExprSyntax: ClosureExprSyntax]
     
     init(closureReplacement: [ClosureExprSyntax: ClosureExprSyntax]) {
         self.closureReplacement = closureReplacement
     }
     
-    override func visit(_ node: ClosureExprSyntax) -> ExprSyntax {
+    public override func visit(_ node: ClosureExprSyntax) -> ExprSyntax {
         if let newClosure = closureReplacement[node] {
             return newClosure.as(ExprSyntax.self)!
         }
@@ -250,7 +250,7 @@ func findSwiftFiles(in directory: String) -> [URL] {
 //    
 //}
 
-class Application {
+public class Application {
     private let fileFinder: SwiftFileFinder
     private let fileProcessor: SwiftFileProcessor
     private let fileWriter: SwiftFileWriter
@@ -261,7 +261,7 @@ class Application {
         self.fileWriter = fileWriter
     }
     
-    func run(with arguments: [String]) {
+    public func run(with arguments: [String]) {
         guard arguments.count > 1 else {
             print("Usage: detectlatency <path-to-xcode-project>")
             return

@@ -10,16 +10,16 @@ import SwiftSyntax
 
 //TODO:- In place addition of mutated code. 
 // Service that iterates over the source tree and contains logic that provides the code snippet that will be running upon user interaction
-class CodeExtractorService: SyntaxVisitor {
+public final class CodeExtractorService: SyntaxVisitor {
     // Set that contains keywords that will only process closures required, TODO:- change to view and build another one that is ViewModifier
-    let interactiveViewsList: Set<String> = ["Button", "contextMenu", "Slider", "NavigationLink" ]
-    let interactiveViewModifiersList: Set<String> = ["onTapGesture", "onChange", "onDrag", "onDelete", "destructive", ]
+    private let interactiveViewsList: Set<String> = ["Button", "contextMenu", "Slider", "NavigationLink" ]
+    private let interactiveViewModifiersList: Set<String> = ["onTapGesture", "onChange", "onDrag", "onDelete", "destructive", ]
     
-    var isInsideInteractiveElement = false
+    private var isInsideInteractiveElement = false
     var closureNodes: [ClosureExprSyntax] = []
     
     // Handle view closures
-    override func visit(_ node: FunctionCallExprSyntax) -> SyntaxVisitorContinueKind {
+    public override func visit(_ node: FunctionCallExprSyntax) -> SyntaxVisitorContinueKind {
         processFunctionCall(node)
         return .visitChildren
     }

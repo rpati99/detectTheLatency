@@ -10,9 +10,8 @@ import SwiftSyntaxBuilder
 import Foundation
 import SwiftParser
 
-
-class TimingCodeInserter: SyntaxRewriter {
-    override func visit(_ node: ClosureExprSyntax) -> ExprSyntax {
+public final class TimingCodeInserter: SyntaxRewriter {
+    public override func visit(_ node: ClosureExprSyntax) -> ExprSyntax {
         // The timing code as a string
         let timingCode = """
         
