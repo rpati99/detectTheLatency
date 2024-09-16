@@ -1,11 +1,11 @@
 //
-//  File.swift
+//  LabelExprSyntax+Extension.swift
 //  
 //
 //  Created by Rachit Prajapati on 6/28/24.
 //
 
-import Foundation
+
 import SwiftSyntax
 
 // To convert directly to ClosureExprSyntax type from retrieved LabeledExprSyntaxType

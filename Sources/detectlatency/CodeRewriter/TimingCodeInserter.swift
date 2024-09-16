@@ -1,13 +1,12 @@
 //
-//  File.swift
-//  
+//  TimingCodeInserter.swift
+//
 //
 //  Created by Rachit Prajapati on 7/9/24.
 //
 
 import SwiftSyntax
 import SwiftSyntaxBuilder
-import Foundation
 import SwiftParser
 
 public final class TimingCodeInserter: SyntaxRewriter {

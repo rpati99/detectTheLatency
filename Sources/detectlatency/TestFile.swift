@@ -1,14 +1,13 @@
 //
-//  File1.swift
+//  TestView.swift
 //  detectlatency
 //
 //  Created by Rachit Prajapati on 6/22/24.
 //
 
-import Foundation
 import SwiftUI
 
-struct ContentView: View {
+struct TestView: View {
     
     @State private var isToggled: Bool = false
     @State private var sliderValue: Float = 0.0
