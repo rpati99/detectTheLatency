@@ -26,7 +26,7 @@ public class Application {
             return
         }
         
-        let swiftFiles = fileFinder.findSwiftFiles(directory: arguments[1])
-        fileProcessor.process(files: swiftFiles)
+        let swiftFiles = fileFinder.findSwiftFiles(directory: arguments[1]) // hold the files that are of .swift format
+        fileProcessor.process(files: swiftFiles) // Perform the operation of detecting the latency
     }
 }

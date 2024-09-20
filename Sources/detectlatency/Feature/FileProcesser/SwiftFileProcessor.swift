@@ -11,6 +11,7 @@ import SwiftParser
 
 
 public struct SwiftFileProcessor : FileProcessable {
+    
     private let syntaxService: SwiftSyntaxModifier
     private let writerService: SwiftFileWriter
     
@@ -19,37 +20,27 @@ public struct SwiftFileProcessor : FileProcessable {
         self.writerService = writerService
     }
     
-    public func process(files: [URL]) {
+    public func process(files: [URL]) { // The input is the list of Swift files
+        
         files.forEach { fileURL in
-            do {
-                let fileContents = try String.init(contentsOf: fileURL, encoding: .utf8)
-                let processedFileContent = fileContents.trimmingCharacters(in: .whitespacesAndNewlines)
-                let parsedContent = Parser.parse(source: processedFileContent)
-                
-                let modifyContent = syntaxService.modifySyntax(of: parsedContent, filePath: fileURL)
-                
-                writerService.writeModifiedCodeToSourceFile(modifyContent, to: fileURL)
-            
-            } catch let fileProcessingError {
-                debugPrint("Error:- Couldn't process files \(fileProcessingError.localizedDescription)")
-            }
+            initiateDetectLatency(fileURL) // Perform operation
         }
-//        let fileContents: String
-//
-//        do {
-//            fileContents = try String.init(contentsOf: fileURL, encoding: .utf8)
-//            //  debugPrint(fileContents.trimmingCharacters(in: .whitespacesAndNewlines))
-//            let processedFileContent = fileContents.trimmingCharacters(in: .whitespacesAndNewlines)
-//
-//            // Declaring parser
-//            let parsedContent = Parser.parse(source: processedFileContent)
-//
-//            applyCodeExtractorService(parsedContent: parsedContent, filepath: fileURL)
-//
-//
-//
-//        } catch let error {
-//            print("Error processing file contents \(error.localizedDescription)")
-//        }
+    }
+    
+    private func initiateDetectLatency(_ url: URL) {
+        do {
+            let fileContents = try String.init(contentsOf: url, encoding: .utf8) // Step 1. Fetching the code of Swift file
+            let processedFileContent = fileContents.trimmingCharacters(in: .whitespacesAndNewlines) // Step 2. Formatting the content
+            let parsedContent = Parser.parse(source: processedFileContent) // Step 3. Perform parsing of the input Swift code
+            
+            // Step 4. Detect the SwiftUI UI components, inject the profiling code and fetch back the modified code as form of SourceFileSyntax
+            let modifyContent = syntaxService.modifySyntax(of: parsedContent, filePath: url)
+
+            // Step 5. Writing back the new code (in form of SourceFileSyntax) in the respective .swift file
+            writerService.writeModifiedCodeToSourceFile(modifyContent, to: url)
+        } catch let fileProcessingError {
+            // Handle Error
+            debugPrint("Error:- Couldn't process files \(fileProcessingError.localizedDescription)")
+        }
     }
 }

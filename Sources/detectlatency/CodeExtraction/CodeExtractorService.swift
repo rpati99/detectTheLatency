@@ -7,56 +7,61 @@
 
 import SwiftSyntax
 
-//TODO:- In place addition of mutated code. 
-// Service that iterates over the source tree and contains logic that provides the code snippet that will be running upon user interaction
+/* Key notes
+ 1. Service that iterates over the source tree, checks if the name matches to the list of SwiftUI UI element listed below
+ 2. Trailing closure is a swift style approach of writing additional code when declaring the method
+ */
+
+ 
 public final class CodeExtractorService: SyntaxVisitor {
-    // Set that contains keywords that will only process closures required, TODO:- change to view and build another one that is ViewModifier
+    // Contains keywords that will only process closures (i.e.:- the code inside SwiftUI UI elements) required
     private let interactiveViewsList: Set<String> = ["Button", "contextMenu", "Slider", "NavigationLink" ]
-    private let interactiveViewModifiersList: Set<String> = ["onTapGesture", "onChange", "onDrag", "onDelete", "destructive", ]
+    private let interactiveViewModifiersList: Set<String> = ["onTapGesture", "onChange", "onDrag", "onDelete", "destructive"]
+    
     
     private var isInsideInteractiveElement = false
-    public var closureNodes: [ClosureExprSyntax] = []
+    public var closureNodes: [ClosureExprSyntax] = [] // Storing the code that is extracted from SwiftUI UI elements
     
-    // Handle view closures
+    // Superclass method for iterating the syntax tree of inputted Swift code in depth-first manner.
     public override func visit(_ node: FunctionCallExprSyntax) -> SyntaxVisitorContinueKind {
-        processFunctionCall(node)
+        processFunctionCall(node)  // Method handles code that is present in SwiftUI UI componenets
         return .visitChildren
     }
     
-    // Handle view closures
+   
     private func processFunctionCall(_ node: FunctionCallExprSyntax) {
-        
-        // Handle Views
-        if let calledExpression = node.calledExpression.as(DeclReferenceExprSyntax.self) {
-            let contains = interactiveViewsList.contains(calledExpression.baseName.text)
+        // Case 1. Handle SwiftUI Views
+        if let calledExpression = node.calledExpression.as(DeclReferenceExprSyntax.self) { // Step 1. Abstracting type
+            let contains = interactiveViewsList.contains(calledExpression.baseName.text) // Step 2. Check if the base name property matches the interactiveViewsList  that holds SwiftUI UI elements
             
+            // Step 3. If contains then perform operation
             if contains {
                 isInsideInteractiveElement = true
                 processFunctionCallSemantics(node, forComponent: calledExpression.baseName.text)
             }
         }
         
-        // Handle View Modifiers
-        // Fetching the expression in order to differentiate the closure desired from the rest
-        if let memberAccess = node.calledExpression.as(MemberAccessExprSyntax.self) {
+        // Case 2. Handle View Modifiers
+        if let memberAccess = node.calledExpression.as(MemberAccessExprSyntax.self) { // Step 1. Abstracting type, where MemberAccessExprsyntax -> trailing closure syntax (code that is to be ran upon user action)
+            let contains = interactiveViewModifiersList.contains(memberAccess.declName.baseName.text) // Step 2. Check if the base name property matches the interactiveViewModifiersList that holds SwiftUI UI elements
             
-            // Condition that checks if it fits in the desired bracket and only processes when affirmative
-            if interactiveViewModifiersList.contains(memberAccess.declName.baseName.text) { // MemberAccessExprsyntax -> trailing closure syntax
+            // Step 3. If contains then perform operation
+            if contains {
 //                let modifierName = memberAccess.declName.baseName.text
                 // print("Detected view modifier: \(modifierName)")
                 
-                // Check if there's a trailing closure directly associated with the view modifier
+                // Step 4 Check if there's a trailing closure directly associated with the view modifier
                 if let trailingClosure = node.trailingClosure {
-                    closureNodes.append(trailingClosure)
+                    closureNodes.append(trailingClosure) // Step 4.1 Append the captured code into the list
 //                    print("inserted timing code, closure for \(modifierName), \(insertTimingCode(into: trailingClosure).statements.description)")
 //                    print("Closure for \(modifierName): \(trailingClosure.statements.description)")
     
                 }
                 
-                // Check if the closure is part of the argument list
+                // Step 5 Check if the closure is part of the argument list
                 for argument in node.arguments {
                     if let closure = argument.expression.as(ClosureExprSyntax.self) {
-                        closureNodes.append(closure)
+                        closureNodes.append(closure) // Step 5.1 Append the captured code into the list
 //                        print("inserted timing code, closure for \(modifierName), \(insertTimingCode(into: closure).statements.description)")
 //                        print("Closure for \(modifierName): \(closure.statements.description)")
                     }
@@ -65,8 +70,8 @@ public final class CodeExtractorService: SyntaxVisitor {
         }
     }
     
+    
     private func processFunctionCallSemantics(_ node: FunctionCallExprSyntax, forComponent component: String) {
-        
         var closureFound = false
         
         if let trailingClosure = node.trailingClosure {
