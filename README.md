@@ -9,12 +9,10 @@
 
 - Code Detection (SyntaxVisitor).
 
-- Code Generation[[1]](https://www.github.com/rpati99/timingMacro) (SwiftSyntax + Macros)
-
-- Code Insertion (SyntaxRewriter)
+- Code Generation and Insertion (SyntaxRewriter)
 
 
-*[1] Macro that measures execution time of any input code.*
+*Also a Macro version of Code Generation(https://www.github.com/rpati99/timingMacro) that measures execution time of any input code.*
 
 
 ## Usage 
