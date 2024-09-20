@@ -10,8 +10,10 @@ import SwiftSyntaxBuilder
 import SwiftParser
 
 public final class TimingCodeInserter: SyntaxRewriter {
+    
+    // Inherited method to iterate the closure code
     public override func visit(_ node: ClosureExprSyntax) -> ExprSyntax {
-        // The timing code as a string
+        // Profiling code
         let timingCode = """
         
                 let startTime = DispatchTime.now()
@@ -23,14 +25,19 @@ public final class TimingCodeInserter: SyntaxRewriter {
                 }
         """
         
+        // Parsing code above to build syntax tree
         let timingCodeStatement = Parser.parse(source: timingCode).statements
         var newStatements : CodeBlockItemListSyntax = timingCodeStatement
+        
+        // Appending the existing code under closure
         for statement in node.statements {
             newStatements.append(statement)
         }
 
+        // Replacing old code with new code that contains profiling code
         let newBody = node.with(\.statements, newStatements)
         
+        // Abstracting to type for merging into parent syntax tree
         return ExprSyntax.init(newBody)
     }
 }

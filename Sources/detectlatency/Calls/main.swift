@@ -7,14 +7,14 @@
 
 import Foundation
 
-//Declaring features
+// Initiating services
 let syntaxModifier = SwiftSyntaxModifier()
 let fileWriter = SwiftFileWriter()
 let fileProcessor = SwiftFileProcessor(syntaxService: syntaxModifier, writerService: fileWriter)
 let fileFinder = SwiftFileFinder()
-
-
 let application = Application(fileFinder: fileFinder, fileProcessor: fileProcessor, fileWriter: fileWriter)
+
+// Run project
 application.run(with: CommandLine.arguments)
 
 
