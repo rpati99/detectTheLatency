@@ -7,6 +7,6 @@
 
 import Foundation
 
-public protocol SwiftFileLocatable {
+public protocol FileLocatable {
     func findSwiftFiles(directory: String) -> [URL]
 }

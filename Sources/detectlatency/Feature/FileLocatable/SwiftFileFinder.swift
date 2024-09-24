@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct SwiftFileFinder: SwiftFileLocatable {
+public struct SwiftFileFinder: FileLocatable {
     
     public func findSwiftFiles(directory: String) -> [URL] {
         let fileManager = FileManager.default

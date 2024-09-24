@@ -11,3 +11,4 @@ import SwiftSyntax
 public protocol SyntaxModifiable {
     func modifySyntax(of parsedContent: SourceFileSyntax, filePath: URL) -> SourceFileSyntax
 }
+ 
