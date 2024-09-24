@@ -29,6 +29,11 @@ let package = Package(
             ],
             path: "Sources/detectlatency"  // Path to the directory containing 'main.swift'
             
+        ),
+        .testTarget(
+            name: "detectlatencyTests",
+            dependencies: ["detectlatency"],
+            path: "Tests/detectlatencyTests"
         )
     ]
 )
