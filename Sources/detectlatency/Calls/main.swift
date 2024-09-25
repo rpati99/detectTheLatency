@@ -18,6 +18,34 @@ let application = Application(fileFinder: fileFinder, fileProcessor: fileProcess
 application.run(with: CommandLine.arguments)
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 //
 //func findSwiftFiles(directory: String) -> [URL] {
 //    let fileManager = FileManager.default

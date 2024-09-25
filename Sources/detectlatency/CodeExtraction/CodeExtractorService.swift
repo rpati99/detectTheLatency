@@ -47,14 +47,13 @@ public final class CodeExtractorService: SyntaxVisitor {
             
             // Step 3. If contains then perform operation
             if contains {
-//                let modifierName = memberAccess.declName.baseName.text
-                // print("Detected view modifier: \(modifierName)")
+                let modifierName = memberAccess.declName.baseName.text
+                 print("Detected view modifier: \(modifierName)")
                 
                 // Step 4 Check if there's a trailing closure directly associated with the view modifier
                 if let trailingClosure = node.trailingClosure {
                     closureNodes.append(trailingClosure) // Step 4.1 Append the captured code into the list
-//                    print("inserted timing code, closure for \(modifierName), \(insertTimingCode(into: trailingClosure).statements.description)")
-//                    print("Closure for \(modifierName): \(trailingClosure.statements.description)")
+                    print("Closure for \(modifierName): \(trailingClosure.statements.description)")
     
                 }
                 
@@ -62,8 +61,6 @@ public final class CodeExtractorService: SyntaxVisitor {
                 for argument in node.arguments {
                     if let closure = argument.expression.as(ClosureExprSyntax.self) {
                         closureNodes.append(closure) // Step 5.1 Append the captured code into the list
-//                        print("inserted timing code, closure for \(modifierName), \(insertTimingCode(into: closure).statements.description)")
-//                        print("Closure for \(modifierName): \(closure.statements.description)")
                     }
                 }
             }
@@ -95,8 +92,7 @@ public final class CodeExtractorService: SyntaxVisitor {
                 
                 if hasUnlabeledArguments || handleTitleParameter || handleRoleParameter {
                     closureNodes.append(trailingClosure) // Step 4. Append theAppend the captured code into the list
-//                    print("inserted timing code,Button with trailing closure found, \(insertTimingCode(into: trailingClosure).description)")
-//                    print("Button with trailing closure found ): \(trailingClosure.description)")
+                    print("Button with trailing closure found ): \(trailingClosure.description)")
                 }
                 closureFound = true
             }
@@ -122,16 +118,14 @@ public final class CodeExtractorService: SyntaxVisitor {
                 if let _ = argument.label?.text.contains("action") {
                     if let closure = argument.toClosure {
                         closureNodes.append(closure)
-//                        print("Button with action code found , \(insertTimingCode(into: closure).description)")
-//                        print("Button with action code found \(closure.description)")
+                        print("Button with action code found \(closure.description)")
                     }
                     
                     closureFound = true
                 } else if (node.trailingClosure?.statements.count) ?? 0 > 0 {
                     if let closure = argument.toClosure {
                         closureNodes.append(closure)
-//                        print("Button with closure found , \(insertTimingCode(into: closure).description)")
-//                        print("Button with closure found \(closure.description)")
+                        print("Button with closure found \(closure.description)")
                     }
                     closureFound = true
                 }

@@ -27,6 +27,7 @@ public final class TimingCodeInserter: SyntaxRewriter {
         
         // Parsing code above to build syntax tree
         let timingCodeStatement = Parser.parse(source: timingCode).statements
+        print("Generating timing code")
         var newStatements : CodeBlockItemListSyntax = timingCodeStatement
         
         // Appending the existing code under closure
@@ -36,6 +37,7 @@ public final class TimingCodeInserter: SyntaxRewriter {
 
         // Replacing old code with new code that contains profiling code
         let newBody = node.with(\.statements, newStatements)
+        print("Attached timing code to the user code, proceeding to write back to source file")
         
         // Abstracting to type for merging into parent syntax tree
         return ExprSyntax.init(newBody)
