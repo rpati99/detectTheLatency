@@ -6,6 +6,13 @@
 //
 
 import Foundation
+/*
+ Think about how to handle additions and before that think on checking the flow regarding insertion of timers.
+ 
+ TODO:- Handle inserter inside flow control 
+ Cover all usecases of button and views
+ Cover all usecases of view modifiers
+ */
 
 // Initiating services
 let syntaxModifier = SwiftSyntaxModifier()

@@ -8,14 +8,6 @@
 import Foundation
 import SwiftSyntax
 
-/*
- Think about how to handle additions and before that think on checking the flow regarding insertion of timers.
- 
- TODO:- Handle inserter inside flow control
- Cover all usecases of button and views
- Cover all usecases of view modifiers
- */
-
 public class ClosureReplacer : SyntaxRewriter {
     public let closureReplacement: [ClosureExprSyntax: ClosureExprSyntax]
     

@@ -4,10 +4,8 @@ import SwiftParser
 
 public class TimingCodeInserter: SyntaxRewriter, AsyncInsertable {
     
-    
     // Override the visit method for ClosureExprSyntax
     public override func visit(_ node: ClosureExprSyntax) -> ExprSyntax {
-        
         
         // Check if the closure contains async code like Task or an escaping closure
         let isAsyncOrEscaping = node.statements.contains { statement in
