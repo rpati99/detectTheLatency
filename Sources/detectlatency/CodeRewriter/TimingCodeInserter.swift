@@ -7,7 +7,7 @@ public class TimingCodeInserter: SyntaxRewriter, AsyncInsertable {
     
     // Override the visit method for ClosureExprSyntax
     public override func visit(_ node: ClosureExprSyntax) -> ExprSyntax {
-       
+        
         
         // Check if the closure contains async code like Task or an escaping closure
         let isAsyncOrEscaping = node.statements.contains { statement in
@@ -29,7 +29,7 @@ public class TimingCodeInserter: SyntaxRewriter, AsyncInsertable {
             var closureIndex = 0
             // Traverse the closure's statements to find any Task block
             var modifiedStatements = CodeBlockItemListSyntax { }
-
+            
             for statement in node.statements {
                 
                 // Detect if the statement contains a Task block
@@ -55,7 +55,7 @@ public class TimingCodeInserter: SyntaxRewriter, AsyncInsertable {
                     let updatedStatements: [CodeBlockItemSyntax] = updatedFunctionCallBlock.statements.map { stmt in
                         stmt.as(CodeBlockItemSyntax.self)!
                     }
-
+                    
                     // Append all updated statements to the modifiedStatements list
                     modifiedStatements.append(contentsOf: updatedStatements)
                     continue
@@ -64,7 +64,7 @@ public class TimingCodeInserter: SyntaxRewriter, AsyncInsertable {
                 // If no special cases (Task or Escaping closure), add the original statement
                 modifiedStatements.append(statement)
             }
-
+            
             return node.with(\.statements, modifiedStatements).as(ExprSyntax.self)!
         } else {
             // Handle non-async and non-escaping closures: Insert profiling for all other cases
@@ -135,9 +135,9 @@ public class TimingCodeInserter: SyntaxRewriter, AsyncInsertable {
     public func insertProfilingIntoEscapingClosures(_ functionCall: FunctionCallExprSyntax, closureIndex: inout Int) -> CodeBlockSyntax {
         // Generate start time code (to be placed before the closure)
         let startTimeVarName = "startTime\(closureIndex)"
-           closureIndex += 1 // Increment the closure index for the next closure
-           
-           let startTimeCode = """
+        closureIndex += 1 // Increment the closure index for the next closure
+        
+        let startTimeCode = """
            
                let \(startTimeVarName) = DispatchTime.now()
            """
@@ -153,7 +153,7 @@ public class TimingCodeInserter: SyntaxRewriter, AsyncInsertable {
             }
             return argument
         }
-
+        
         // Handle the trailing closure separately if it exists
         var updatedFunctionCall = functionCall.with(\.arguments, LabeledExprListSyntax(updatedArguments))
         
@@ -202,7 +202,7 @@ public class TimingCodeInserter: SyntaxRewriter, AsyncInsertable {
         // Return the updated closure with the defer block added
         return closure.with(\.statements, updatedStatements)
     }
-
+    
 }
 
 
