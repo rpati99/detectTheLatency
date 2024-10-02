@@ -2,7 +2,7 @@ import SwiftSyntax
 import SwiftSyntaxBuilder
 import SwiftParser
 
-public final class TimingCodeInserter: SyntaxRewriter {
+public class TimingCodeInserter: SyntaxRewriter, AsyncInsertable {
     
     
     // Override the visit method for ClosureExprSyntax
@@ -94,7 +94,7 @@ public final class TimingCodeInserter: SyntaxRewriter {
         }
     }
     
-    private func hasEscapingClosure(_ functionCall: FunctionCallExprSyntax) -> Bool {
+    public func hasEscapingClosure(_ functionCall: FunctionCallExprSyntax) -> Bool {
         // Check if the function has either labeled closures in its arguments or a trailing closure
         let hasLabeledClosure = functionCall.arguments.contains { argument in
             argument.expression.as(ClosureExprSyntax.self) != nil
@@ -105,7 +105,7 @@ public final class TimingCodeInserter: SyntaxRewriter {
     
     
     // Insert profiling code inside the Task block’s trailing closure
-    private func insertProfilingIntoTaskClosure(_ closure: ClosureExprSyntax) -> ClosureExprSyntax {
+    public func insertProfilingIntoTaskClosure(_ closure: ClosureExprSyntax) -> ClosureExprSyntax {
         // The profiling code to insert
         let profilingCode = """
         
@@ -132,7 +132,7 @@ public final class TimingCodeInserter: SyntaxRewriter {
     }
     
     
-    private func insertProfilingIntoEscapingClosures(_ functionCall: FunctionCallExprSyntax, closureIndex: inout Int) -> CodeBlockSyntax {
+    public func insertProfilingIntoEscapingClosures(_ functionCall: FunctionCallExprSyntax, closureIndex: inout Int) -> CodeBlockSyntax {
         // Generate start time code (to be placed before the closure)
         let startTimeVarName = "startTime\(closureIndex)"
            closureIndex += 1 // Increment the closure index for the next closure
@@ -179,7 +179,7 @@ public final class TimingCodeInserter: SyntaxRewriter {
         return finalFunctionCall
     }
     
-    private func insertProfilingIntoEscapingClosure(_ closure: ClosureExprSyntax, startTimeVarName: String) -> ClosureExprSyntax {
+    public func insertProfilingIntoEscapingClosure(_ closure: ClosureExprSyntax, startTimeVarName: String) -> ClosureExprSyntax {
         // Profiling code to insert in the defer block inside the closure
         let deferCode = """
         
@@ -203,6 +203,6 @@ public final class TimingCodeInserter: SyntaxRewriter {
         return closure.with(\.statements, updatedStatements)
     }
 
-
-    
 }
+
+

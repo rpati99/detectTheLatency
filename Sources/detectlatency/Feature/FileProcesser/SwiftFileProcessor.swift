@@ -32,12 +32,9 @@ public struct SwiftFileProcessor : FileProcessable {
             let fileContents = try String.init(contentsOf: url, encoding: .utf8) // Step 1. Fetching the code of Swift file
             let processedFileContent = fileContents.trimmingCharacters(in: .whitespacesAndNewlines) // Step 2. Formatting the content
             let parsedContent = Parser.parse(source: processedFileContent) // Step 3. Perform parsing of the input Swift code
-            print("SYNTAX TREE BELOW")
-            dump(parsedContent)
             // Step 4. Detect the SwiftUI UI components, inject the profiling code and fetch back the modified code as form of SourceFileSyntax
             let modifyContent = syntaxService.modifySyntax(of: parsedContent, filePath: url)
 
-            
             // Step 5. Writing back the new code (in form of SourceFileSyntax) in the respective .swift file
             writerService.writeModifiedCodeToSourceFile(modifyContent, to: url)
         } catch let fileProcessingError {

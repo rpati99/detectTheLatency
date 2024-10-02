@@ -30,3 +30,4 @@ public class Application {
         fileProcessor.process(files: swiftFiles) // Perform the operation of detecting the latency
     }
 }
+
