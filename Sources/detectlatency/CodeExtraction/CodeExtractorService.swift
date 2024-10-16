@@ -53,8 +53,8 @@ public final class CodeExtractorService: SyntaxVisitor {
                 // Step 4 Check if there's a trailing closure directly associated with the view modifier
                 if let trailingClosure = node.trailingClosure {
                     closureNodes.append(trailingClosure) // Step 4.1 Append the captured code into the list
-                    print("Closure for \(modifierName): \(trailingClosure.statements.description)")
-    
+//                    print("Closure for \(modifierName): \(trailingClosure.statements.description)")
+//    
                 }
                 
                 // Step 5 Check if the closure is part of the argument list
@@ -92,7 +92,7 @@ public final class CodeExtractorService: SyntaxVisitor {
                 
                 if hasUnlabeledArguments || handleTitleParameter || handleRoleParameter {
                     closureNodes.append(trailingClosure) // Step 4. Append theAppend the captured code into the list
-                    print("Button with trailing closure found ): \(trailingClosure.description)")
+//                    print("Button with trailing closure found ): \(trailingClosure.description)")
                 }
                 closureFound = true
             }
@@ -118,14 +118,14 @@ public final class CodeExtractorService: SyntaxVisitor {
                 if let _ = argument.label?.text.contains("action") {
                     if let closure = argument.toClosure {
                         closureNodes.append(closure)
-                        print("Button with action code found \(closure.description)")
+//                        print("Button with action code found \(closure.description)")
                     }
                     
                     closureFound = true
                 } else if (node.trailingClosure?.statements.count) ?? 0 > 0 {
                     if let closure = argument.toClosure {
                         closureNodes.append(closure)
-                        print("Button with closure found \(closure.description)")
+//                        print("Button with closure found \(closure.description)")
                     }
                     closureFound = true
                 }
