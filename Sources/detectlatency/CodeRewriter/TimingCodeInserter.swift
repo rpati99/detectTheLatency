@@ -55,17 +55,37 @@ public class TimingCodeInserter: SyntaxRewriter, AsyncInsertable {
         } else {
             var closureIndex = 0
             var modifiedStatements = CodeBlockItemListSyntax { }
+
+            // top down mutation, by traversing the synchronous code which is a CodeBlockSyntax
             for statement in node.statements {
                 
-              
-                // Handle nested closures at any depth (inside any declared scope)
-                let nestedAsyncCode = traverseAndDetectNestedScopes(statement.item.as(Syntax.self)!, closureIndex: &closureIndex)
-                if let updatedClosure = nestedAsyncCode.as(ClosureExprSyntax.self) {
-                    print("Updated closure is \n\(updatedClosure.description)")
-                    let nestedStatement = statement.with(\.item, .expr(ExprSyntax(updatedClosure)))
-                    modifiedStatements.append(nestedStatement)
-                    continue
+               // Check if the statement aka codeBlockItem has a scope
+                let statementItem = statement.item
+                // possible usecases of containing scope
+                let requiredKind : [SyntaxKind] = [.expressionStmt, .closureExpr, .functionCallExpr]
+                
+                // Assuming Async (Task) code is present
+                //1. contains a scope
+                if requiredKind.contains(statementItem.kind) {
+                    // if there is a task then replace the statement with mutatedTaskCode, else doesn't matter
+                    
+            
+                    
+                } else { // 2. No scope or it's a Task code
+                    // if normal code is task code then mutate it and add that to modified statement else directly add statement to modified statement
+                   
                 }
+       
+                // previously
+                // Handle nested closures at any depth (inside any declared scope)
+//                let _ =
+                
+//                if let updatedClosure = nestedAsyncCode.as(ClosureExprSyntax.self) {
+//                    print("Updated closure is \n\(updatedClosure.description)")
+//                    let nestedStatement = statement.with(\.item, .expr(ExprSyntax(updatedClosure)))
+//                    modifiedStatements.append(nestedStatement)
+//                    continue
+//                }
             }
             
    
@@ -97,48 +117,43 @@ public class TimingCodeInserter: SyntaxRewriter, AsyncInsertable {
         }
     }
     
-    
-    private func traverseAndDetectNestedScopes(_ item: Syntax, closureIndex: inout Int) -> Syntax {
-//        var modifiedSyntax = item
-        
+    // goal is to find the task code -> add timer code -> and then create the statement that contains the mutation
+    private func handleNestedTaskInsertion(_ item: Syntax, closureIndex: inout Int) -> Syntax {
+
         item.children(viewMode: .sourceAccurate).forEach { itemChild in
-            let traversedStatement = traverseAndDetectNestedScopes(itemChild, closureIndex: &closureIndex)
-          
+            let traversedStatement = handleNestedTaskInsertion(itemChild, closureIndex: &closureIndex)
             
-            // Case 1 :- Async/Await Task
+            // Async/Await Task
             if let taskExprInTraversedStatement = findTaskExpr(in: traversedStatement) {
-               // its a function call expr syntax, so mutate it and just try to join it to the item child
+//               // capturing code inside Task
                 if let taskClosureCode = taskExprInTraversedStatement.trailingClosure {
+                    // gettng the timer inserted into the Task block
                     let timerInsertedTaskClosureCode = insertProfilingIntoTaskClosure(taskClosureCode)
-                    // replace the mutated code and insert back to the syntax tree
-                    let mutatedTaskCode = taskExprInTraversedStatement.with(\.trailingClosure, timerInsertedTaskClosureCode)
                     
-                    print("task mutated code is \n\(mutatedTaskCode.description)")
-                    // so it's like replacing statements under item directly, by replacing item child first
-                    // and then replacing that mutated item child with the original item child
-                    // TODO:- how do i adapt to the escaping closure usecase where two things are there
+                    // replace the original code in Task with timer added code
+                    let modifiedTaskCode = taskExprInTraversedStatement.with(\.trailingClosure, timerInsertedTaskClosureCode)
+                    
+                    // Instead of replacing the entire statement, selectively replace only the Task segment
+                    print("MODIFIED TASK CODE \n\(modifiedTaskCode.description)")
                 }
             }
-            
-            // Case 2:- Escaping closure use case
-            // Handle escaping closures inside the statements
-            if let functionCall = findFunctionCallExpr(in: traversedStatement), hasEscapingClosure(functionCall) {
-                let updatedFunctionCallBlock = insertProfilingIntoEscapingClosures(functionCall, closureIndex: &closureIndex)
-
-                // Convert the returned CodeBlockSyntax into a sequence of CodeBlockItemSyntax
-                let functionCallStatements: [CodeBlockItemSyntax] = updatedFunctionCallBlock.statements.compactMap { stmt in
-                    stmt.as(CodeBlockItemSyntax.self)
-                }
-
-                // Append all updated statements to the updatedStatements list
-                print("closure code mutated \n\(functionCallStatements.forEach({ print($0.description) }))")
-               
-            }
-            
-            
-            
-                
         }
+        
+        //            // Case 2:- Escaping closure use case
+        //            // Handle escaping closures inside the statements
+        //            if let functionCall = findFunctionCallExpr(in: traversedStatement), hasEscapingClosure(functionCall) {
+        //                let updatedFunctionCallBlock = insertProfilingIntoEscapingClosures(functionCall, closureIndex: &closureIndex)
+        //
+        //                // Convert the returned CodeBlockSyntax into a sequence of CodeBlockItemSyntax
+        //                let functionCallStatements: [CodeBlockItemSyntax] = updatedFunctionCallBlock.statements.compactMap { stmt in
+        //                    stmt.as(CodeBlockItemSyntax.self)
+        //                }
+        //
+        //                // Append all updated statements to the updatedStatements list
+        //                print("closure code mutated \n\(functionCallStatements.forEach({ print($0.description) }))")
+        //
+        //            }
+                    
 //        // Use `.children(viewMode:)` to iterate over direct children of the item
 //        item.children(viewMode: .sourceAccurate).forEach { child in
 //            // Traverse further to get nested closures or async blocks
@@ -220,13 +235,6 @@ public class TimingCodeInserter: SyntaxRewriter, AsyncInsertable {
         if let functionCall = syntax.as(FunctionCallExprSyntax.self) {
             return functionCall
         }
-
-        for child in syntax.children(viewMode: .sourceAccurate) {
-            if let functionCall = findFunctionCallExpr(in: child) {
-                return functionCall
-            }
-        }
-
         return nil
     }
 
@@ -237,12 +245,6 @@ public class TimingCodeInserter: SyntaxRewriter, AsyncInsertable {
            taskName == "Task" {
             return taskCall
         }
-
-//        for child in syntax.children(viewMode: .sourceAccurate) {
-//            if let taskCall = findTaskExpr(in: child) {
-//                return taskCall
-//            }
-//        }
 
         return nil
     }
