@@ -117,68 +117,6 @@ public class TimingCodeInserter: SyntaxRewriter, AsyncInsertable {
 //        }
 //    }
     
-//    public override func visit(_ node: ClosureExprSyntax) -> ExprSyntax {
-//        
-//        var closureIndex = 0
-//        var modifiedStatements = CodeBlockItemListSyntax { }
-//
-//        for statement in node.statements {
-//            
-//            // Detect if the statement contains a Task block
-//            if let taskCall = statement.item.as(FunctionCallExprSyntax.self),
-//               let taskName = taskCall.calledExpression.as(DeclReferenceExprSyntax.self)?.baseName.text,
-//               taskName == "Task" {
-//                // We have found a Task block, so now insert profiling inside the Task's trailing closure
-//                if let taskClosure = taskCall.trailingClosure {
-//                    let updatedTaskClosure = insertProfilingIntoTaskClosure(taskClosure)
-//                    let updatedTaskCall = ExprSyntax(taskCall.with(\.trailingClosure, updatedTaskClosure)) // Fix: Wrap FunctionCallExprSyntax as ExprSyntax
-//                    let updatedStatement = statement.with(\.item, updatedTaskCall.as(CodeBlockItemSyntax.Item.self)!)
-//                    modifiedStatements.append(updatedStatement)
-//                    continue
-//                }
-//            }
-//            
-//            // Handle escaping closures
-//            if let functionCall = statement.item.as(FunctionCallExprSyntax.self), hasEscapingClosure(functionCall) {
-//                // Insert profiling for escaping closures and return the resulting code block
-//                let updatedFunctionCallBlock = insertProfilingIntoEscapingClosures(functionCall, closureIndex: &closureIndex)
-//                
-//                // Convert the returned CodeBlockSyntax into a sequence of CodeBlockItemSyntax
-//                let updatedStatements: [CodeBlockItemSyntax] = updatedFunctionCallBlock.statements.map { stmt in
-//                    stmt.as(CodeBlockItemSyntax.self)!
-//                }
-//                
-//                // Append all updated statements to the modifiedStatements list
-//                modifiedStatements.append(contentsOf: updatedStatements)
-//                continue
-//            }
-//
-//            // For synchronous code (non-async and non-escaping closures), insert profiling at the beginning of the closure
-////            if statement.item.as(FunctionCallExprSyntax.self) == nil {
-//                // Insert synchronous profiling code
-//                let timingCode = """
-//                    
-//                    let startTime = DispatchTime.now()
-//                    defer {
-//                        let endTime = DispatchTime.now()
-//                        let timeInNanoSec = endTime.uptimeNanoseconds - startTime.uptimeNanoseconds
-//                        let timeInSec = Double(timeInNanoSec) / 1_000_000_000
-//                        debugPrint(timeInSec)
-//                    }
-//                """
-//                let timingCodeStatements = Parser.parse(source: timingCode).statements
-//                
-//                // Insert timing code statements before the synchronous code
-//                modifiedStatements.append(contentsOf: timingCodeStatements)
-//                modifiedStatements.append(statement)
-////            }
-//        }
-//        
-//        // Replacing old code with new code that contains profiling code for both synchronous and asynchronous parts
-//        let newBody = node.with(\.statements, modifiedStatements)
-//        return ExprSyntax.init(newBody)
-//    }
-    
     
     public override func visit(_ node: ClosureExprSyntax) -> ExprSyntax {
         
