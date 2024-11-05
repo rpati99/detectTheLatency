@@ -153,6 +153,21 @@ public class TimingCodeInserter: SyntaxRewriter, AsyncInsertable {
                 }
             }
             
+            if let functionCall = statement.item.as(FunctionCallExprSyntax.self), hasEscapingClosure(functionCall) {
+                // Insert profiling for escaping closures
+                let updatedFunctionCallBlock = insertProfilingIntoEscapingClosures(functionCall, closureIndex: &closureIndex)
+                
+                // Convert the returned CodeBlockSyntax into a sequence of CodeBlockItemSyntax
+                let updatedStatements: [CodeBlockItemSyntax] = updatedFunctionCallBlock.statements.map { stmt in
+                    stmt.as(CodeBlockItemSyntax.self)!
+                }
+                
+                // Append all updated statements to the modifiedStatements list
+                modifiedStatements.append(contentsOf: updatedStatements)
+                continue
+            }
+            
+            
             // For non-Task statements, directly add them without additional timing code
             modifiedStatements.append(statement)
         }
