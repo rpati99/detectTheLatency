@@ -156,11 +156,6 @@ public class TimingCodeInserter: SyntaxRewriter, AsyncInsertable {
                     continue
                 }
             }
-           
-            
-   
-            
-            
             
             // Level 0 escaping closure block
             if let functionCall = statement.item.as(FunctionCallExprSyntax.self) {
