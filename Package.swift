@@ -16,7 +16,8 @@ let package = Package(
     ],
     dependencies: [
         // Dependencies declare other packages that this package depends on.
-        .package(url: "https://github.com/apple/swift-syntax.git", from: "509.0.0")
+        .package(url: "https://github.com/apple/swift-syntax.git", from: "509.0.0"),
+        .package(url: "https://github.com/apple/swift-collections.git",.upToNextMinor(from: "1.1.0")) // for callgraphbuilder module
     ],
     targets: [
         // Declare this as an executable target since 'main.swift' is present.
@@ -25,15 +26,11 @@ let package = Package(
             dependencies: [
                 .product(name: "SwiftSyntax", package: "swift-syntax"),
                 .product(name: "SwiftParser", package: "swift-syntax"),
-                .product(name: "SwiftSyntaxBuilder", package: "swift-syntax")
+                .product(name: "SwiftSyntaxBuilder", package: "swift-syntax"),
+                .product(name: "Collections", package: "swift-collections")
             ],
-            path: "Sources/detectlatency"  // Path to the directory containing 'main.swift'
+            path: "Sources"  // Path to the directory containing 'main.swift'
             
         ),
-        .testTarget(
-            name: "detectlatencyTests",
-            dependencies: ["detectlatency"],
-            path: "Tests/detectlatencyTests"
-        )
     ]
 )

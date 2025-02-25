@@ -16,7 +16,7 @@ public struct SwiftSyntaxModifier: SyntaxModifiable {
         var closureReplacement: [ClosureExprSyntax: ClosureExprSyntax] = [:] // Dictionary to handle the unmodified and modified code
                                  
         for closure in codeExtractor.closureNodes { // Iterating capture closure nodes that hold the code and adding the profiling logic
-            let inserter = TimingCodeInserter()
+            let inserter = TimingCodeInserter2()
             let newClosure = inserter.visit(closure).as(ClosureExprSyntax.self)! // Adding the profiling code
             closureReplacement[closure] = newClosure // Maintain hashmap of old code and new code
         }
