@@ -32,25 +32,26 @@ class MethodProfilingInserter: SyntaxRewriter {
         }
 
         // Prepare a timing code block to be inserted at the top of the function body.
-        let timingCode = """
+        let parentProfiler = """
         
-            let startTime = DispatchTime.now()
+            var asyncTime: Double?
+            asyncTime! += 0
+            let syncStartTime = DispatchTime.now()
             defer {
-                let endTime = DispatchTime.now()
-                let timeInNanoSec = endTime.uptimeNanoseconds - startTime.uptimeNanoseconds
-                let timeInSec = Double(timeInNanoSec) / 1_000_000_000
-                debugPrint("Function \(functionName) executed in \\(timeInSec) seconds")
+                let syncEndTime = DispatchTime.now()
+                let syncTimeElapsed = Double(syncEndTime.uptimeNanoseconds - syncStartTime.uptimeNanoseconds) / 1_000_000_000
+                debugPrint("Sync executions under \(functionName) took \\(syncTimeElapsed) seconds")
             }
-        
         """
-        let timingCodeStatements = Parser.parse(source: timingCode).statements
+        
+        let timingCodeStatements = Parser.parse(source: parentProfiler).statements
 
         // Recursively process each statement in the function body using DFS.
         var modifiedStatements = CodeBlockItemListSyntax { }
         // Insert the timing code first.
         modifiedStatements.append(contentsOf: timingCodeStatements)
         for stmt in body.statements {
-            modifiedStatements.append(contentsOf: dfsInsertProfiling(stmt, closureIndex: &closureIndex))
+            modifiedStatements.append(contentsOf: dfsInsertProfiling(stmt, closureIndex: &closureIndex, functionName: functionName))
         }
 
         // Create the new function body.
@@ -62,7 +63,7 @@ class MethodProfilingInserter: SyntaxRewriter {
 
     /// DFS traversal that processes nested scopes for Task, escaping closures, and also
     /// recurses into conditionals and loops.
-    private func dfsInsertProfiling(_ statement: CodeBlockItemSyntax, closureIndex: inout Int) -> [CodeBlockItemSyntax] {
+    private func dfsInsertProfiling(_ statement: CodeBlockItemSyntax, closureIndex: inout Int, functionName: String) -> [CodeBlockItemSyntax] {
         var modifiedStatements: [CodeBlockItemSyntax] = []
 
         // --- Handle Task block ---
@@ -70,7 +71,7 @@ class MethodProfilingInserter: SyntaxRewriter {
            let taskName = taskCall.calledExpression.as(DeclReferenceExprSyntax.self)?.baseName.text,
            taskName == "Task" {
             if let taskClosure = taskCall.trailingClosure {
-                let updatedTaskClosure = insertProfilingIntoTaskClosure(taskClosure, closureIndex: &closureIndex)
+                let updatedTaskClosure = insertProfilingIntoTaskClosure(taskClosure, closureIndex: &closureIndex, functionName: functionName)
                 let updatedTaskCall = ExprSyntax(taskCall.with(\.trailingClosure, updatedTaskClosure))
                 let updatedStatement = statement.with(\.item, .expr(updatedTaskCall))
                 modifiedStatements.append(updatedStatement)
@@ -83,7 +84,7 @@ class MethodProfilingInserter: SyntaxRewriter {
            let detached = functionCall.calledExpression.as(MemberAccessExprSyntax.self),
            detached.declName.baseName.text == "detached" {
             if let taskClosure = functionCall.trailingClosure {
-                let updatedTaskClosure = insertProfilingIntoTaskClosure(taskClosure, closureIndex: &closureIndex)
+                let updatedTaskClosure = insertProfilingIntoTaskClosure(taskClosure, closureIndex: &closureIndex, functionName: functionName)
                 let updatedTaskCall = ExprSyntax(functionCall.with(\.trailingClosure, updatedTaskClosure))
                 let updatedStatement = statement.with(\.item, .expr(updatedTaskCall))
                 modifiedStatements.append(updatedStatement)
@@ -94,7 +95,7 @@ class MethodProfilingInserter: SyntaxRewriter {
         // --- Handle escaping closures ---
         if let functionCall = statement.item.as(FunctionCallExprSyntax.self),
            hasEscapingClosure(functionCall) {
-            let updatedBlock = insertProfilingIntoEscapingClosures(functionCall, closureIndex: &closureIndex)
+            let updatedBlock = insertProfilingIntoEscapingClosures(functionCall, closureIndex: &closureIndex, functionName: functionName)
             let updatedStatements = updatedBlock.statements.map { $0 }
             modifiedStatements.append(contentsOf: updatedStatements)
             return modifiedStatements
@@ -102,25 +103,25 @@ class MethodProfilingInserter: SyntaxRewriter {
 
         // --- Recurse into conditionals and loops ---
         if let ifStmt = statement.item.as(IfExprSyntax.self) {
-            let updatedIf = processIf(ifStmt, closureIndex: &closureIndex)
+            let updatedIf = processIf(ifStmt, closureIndex: &closureIndex, functionName: functionName)
             let updatedStatement = statement.with(\.item, .expr(ExprSyntax(updatedIf)))
             modifiedStatements.append(updatedStatement)
             return modifiedStatements
         }
         if let forStmt = statement.item.as(ForStmtSyntax.self) {
-            let updatedFor = processForIn(forStmt, closureIndex: &closureIndex)
+            let updatedFor = processForIn(forStmt, closureIndex: &closureIndex, functionName: functionName)
             let updatedStatement = statement.with(\.item, .stmt(StmtSyntax(updatedFor)))
             modifiedStatements.append(updatedStatement)
             return modifiedStatements
         }
         if let whileStmt = statement.item.as(WhileStmtSyntax.self) {
-            let updatedWhile = processWhile(whileStmt, closureIndex: &closureIndex)
+            let updatedWhile = processWhile(whileStmt, closureIndex: &closureIndex, functionName: functionName)
             let updatedStatement = statement.with(\.item, .stmt(StmtSyntax(updatedWhile)))
             modifiedStatements.append(updatedStatement)
             return modifiedStatements
         }
         if let repeatStmt = statement.item.as(RepeatStmtSyntax.self) {
-            let updatedRepeat = processRepeatWhile(repeatStmt, closureIndex: &closureIndex)
+            let updatedRepeat = processRepeatWhile(repeatStmt, closureIndex: &closureIndex, functionName: functionName)
             let updatedStatement = statement.with(\.item, .stmt(StmtSyntax(updatedRepeat)))
             modifiedStatements.append(updatedStatement)
             return modifiedStatements
@@ -142,30 +143,32 @@ class MethodProfilingInserter: SyntaxRewriter {
 
     // MARK: - Insertion Helpers
 
-    public func insertProfilingIntoTaskClosure(_ closure: ClosureExprSyntax, closureIndex: inout Int) -> ClosureExprSyntax {
+    public func insertProfilingIntoTaskClosure(_ closure: ClosureExprSyntax, closureIndex: inout Int, functionName: String) -> ClosureExprSyntax {
         let profilingCode = """
         
-        
-            let startTime = DispatchTime.now()
+            let asyncStartTime = DispatchTime.now()
             defer {
-                let endTime = DispatchTime.now()
-                let timeInNanoSec = endTime.uptimeNanoseconds - startTime.uptimeNanoseconds
-                let timeInSec = Double(timeInNanoSec) / 1_000_000_000
-                debugPrint("Async Task took \\(timeInSec) seconds")
+                let asyncEndTime = DispatchTime.now()
+                let asyncTimeElapsed = Double(asyncEndTime.uptimeNanoseconds - asyncStartTime.uptimeNanoseconds) / 1_000_000_000
+                
+                 
+                Task { @MainActor in 
+                    asyncTime += asyncTimeElapsed
+                    debugPrint("Async executions under \(functionName) took \\(asyncTime) seconds")
+                }
             }
-
         """
         let profilingStmts = Parser.parse(source: profilingCode).statements
         var updatedStmts = profilingStmts
         for stmt in closure.statements {
-            updatedStmts.append(contentsOf: dfsInsertProfiling(stmt, closureIndex: &closureIndex))
+            updatedStmts.append(contentsOf: dfsInsertProfiling(stmt, closureIndex: &closureIndex, functionName: functionName))
         }
         return closure.with(\.statements, updatedStmts)
     }
 
-    public func insertProfilingIntoEscapingClosures(_ functionCall: FunctionCallExprSyntax, closureIndex: inout Int) -> CodeBlockSyntax {
+    public func insertProfilingIntoEscapingClosures(_ functionCall: FunctionCallExprSyntax, closureIndex: inout Int, functionName: String) -> CodeBlockSyntax {
         // Use a simple startTime variable name and increment manually if needed.
-        let startTimeVarName = "startTime\(closureIndex)"
+        let startTimeVarName = "asyncStartTime\(closureIndex)"
         closureIndex += 1
         
         let startTimeCode = """
@@ -177,7 +180,7 @@ class MethodProfilingInserter: SyntaxRewriter {
         
         let updatedArguments = functionCall.arguments.map { argument -> LabeledExprSyntax in
             if let closure = argument.expression.as(ClosureExprSyntax.self) {
-                let updatedClosure = insertProfilingIntoEscapingClosure(closure, startTimeVarName: startTimeVarName, closureIndex: &closureIndex)
+                let updatedClosure = insertProfilingIntoEscapingClosure(closure, startTimeVarName: startTimeVarName, closureIndex: &closureIndex, functionName: functionName)
                 return argument.with(\.expression, ExprSyntax(updatedClosure))
             }
             return argument
@@ -185,7 +188,7 @@ class MethodProfilingInserter: SyntaxRewriter {
         
         var updatedFunctionCall = functionCall.with(\.arguments, LabeledExprListSyntax(updatedArguments))
         if let trailingClosure = functionCall.trailingClosure {
-            let updatedTrailingClosure = insertProfilingIntoEscapingClosure(trailingClosure, startTimeVarName: startTimeVarName, closureIndex: &closureIndex)
+            let updatedTrailingClosure = insertProfilingIntoEscapingClosure(trailingClosure, startTimeVarName: startTimeVarName, closureIndex: &closureIndex, functionName: functionName)
             updatedFunctionCall = updatedFunctionCall.with(\.trailingClosure, updatedTrailingClosure)
         }
         
@@ -200,37 +203,35 @@ class MethodProfilingInserter: SyntaxRewriter {
         return finalBlock
     }
 
-    public func insertProfilingIntoEscapingClosure(_ closure: ClosureExprSyntax, startTimeVarName: String, closureIndex: inout Int) -> ClosureExprSyntax {
+    public func insertProfilingIntoEscapingClosure(_ closure: ClosureExprSyntax, startTimeVarName: String, closureIndex: inout Int, functionName: String) -> ClosureExprSyntax {
         let deferCode = """
         
-
             defer {
-                let endTime = DispatchTime.now()
-                let timeInNanoSec = endTime.uptimeNanoseconds - \(startTimeVarName).uptimeNanoseconds
-                let timeInSec = Double(timeInNanoSec) / 1_000_000_000
-                debugPrint("Escaping closure took \\(timeInSec) seconds")
+                let asyncEndTime = DispatchTime.now()
+                let asyncTimeElapsed = Double(asyncEndTime.uptimeNanoseconds - \(String(describing: startTimeVarName)).uptimeNanoseconds) / 1_000_000_000
+                asyncTime += asyncTimeElapsed
+                debugPrint("Async executions under \(functionName) \\(asyncTime) seconds")
             }
-        
         """
         let deferStmts = Parser.parse(source: deferCode).statements
         var updatedStmts = deferStmts
         for stmt in closure.statements {
-            updatedStmts.append(contentsOf: dfsInsertProfiling(stmt, closureIndex: &closureIndex))
+            updatedStmts.append(contentsOf: dfsInsertProfiling(stmt, closureIndex: &closureIndex, functionName: functionName))
         }
         return closure.with(\.statements, updatedStmts)
     }
 
     // MARK: - Conditionals & Loops Processing
 
-    private func processIf(_ ifNode: IfExprSyntax, closureIndex: inout Int) -> IfExprSyntax {
-        let updatedBody = processCodeBlock(ifNode.body, closureIndex: &closureIndex)
+    private func processIf(_ ifNode: IfExprSyntax, closureIndex: inout Int, functionName: String) -> IfExprSyntax {
+        let updatedBody = processCodeBlock(ifNode.body, closureIndex: &closureIndex, functionName: functionName)
         let updatedElse = ifNode.elseBody.map { elseBody -> IfExprSyntax.ElseBody in
             switch elseBody {
             case .codeBlock(let block):
-                let newBlock = processCodeBlock(block, closureIndex: &closureIndex)
+                let newBlock = processCodeBlock(block, closureIndex: &closureIndex, functionName: functionName)
                 return .codeBlock(newBlock)
             case .ifExpr(let nestedIf):
-                let newIf = processIf(nestedIf, closureIndex: &closureIndex)
+                let newIf = processIf(nestedIf, closureIndex: &closureIndex, functionName: functionName)
                 return .ifExpr(newIf)
             }
         }
@@ -238,26 +239,26 @@ class MethodProfilingInserter: SyntaxRewriter {
     }
 
     // runs when the traversal detects the conditional statements and loop statements to perform insertions under async components
-    private func processCodeBlock(_ block: CodeBlockSyntax, closureIndex: inout Int) -> CodeBlockSyntax {
+    private func processCodeBlock(_ block: CodeBlockSyntax, closureIndex: inout Int, functionName: String) -> CodeBlockSyntax {
         var newItems = CodeBlockItemListSyntax { }
         for stmt in block.statements {
-            newItems.append(contentsOf: dfsInsertProfiling(stmt, closureIndex: &closureIndex))
+            newItems.append(contentsOf: dfsInsertProfiling(stmt, closureIndex: &closureIndex, functionName: functionName))
         }
         return block.with(\.statements, newItems)
     }
 
-    private func processWhile(_ whileNode: WhileStmtSyntax, closureIndex: inout Int) -> WhileStmtSyntax {
-        let updatedBody = processCodeBlock(whileNode.body, closureIndex: &closureIndex)
+    private func processWhile(_ whileNode: WhileStmtSyntax, closureIndex: inout Int, functionName: String) -> WhileStmtSyntax {
+        let updatedBody = processCodeBlock(whileNode.body, closureIndex: &closureIndex, functionName: functionName)
         return whileNode.with(\.body, updatedBody)
     }
 
-    private func processForIn(_ forNode: ForStmtSyntax, closureIndex: inout Int) -> ForStmtSyntax {
-        let updatedBody = processCodeBlock(forNode.body, closureIndex: &closureIndex)
+    private func processForIn(_ forNode: ForStmtSyntax, closureIndex: inout Int, functionName: String) -> ForStmtSyntax {
+        let updatedBody = processCodeBlock(forNode.body, closureIndex: &closureIndex, functionName: functionName)
         return forNode.with(\.body, updatedBody)
     }
 
-    private func processRepeatWhile(_ repeatNode: RepeatStmtSyntax, closureIndex: inout Int) -> RepeatStmtSyntax {
-        let updatedBody = processCodeBlock(repeatNode.body, closureIndex: &closureIndex)
+    private func processRepeatWhile(_ repeatNode: RepeatStmtSyntax, closureIndex: inout Int, functionName: String) -> RepeatStmtSyntax {
+        let updatedBody = processCodeBlock(repeatNode.body, closureIndex: &closureIndex, functionName: functionName)
         return repeatNode.with(\.body, updatedBody)
     }
 }

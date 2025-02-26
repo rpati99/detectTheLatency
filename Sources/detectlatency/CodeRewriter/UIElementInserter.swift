@@ -10,24 +10,25 @@ import SwiftSyntaxBuilder
 import SwiftParser
 
 public class UIElementInserter: SyntaxRewriter {
+    
     public override func visit(_ node: ClosureExprSyntax) -> ExprSyntax {
         var closureIndex = 0
         var modifiedStatements = CodeBlockItemListSyntax { }
         
         // Ensure profiling is inserted at the start
-        let timingCode = """
+        let parentProfiler = """
         
-        
-            let startTime = DispatchTime.now()
+            var asyncTime: Double
+            asyncTime += 0
+            let syncStartTime = DispatchTime.now()
             defer {
-                let endTime = DispatchTime.now()
-                let timeInNanoSec = endTime.uptimeNanoseconds - startTime.uptimeNanoseconds
-                let timeInSec = Double(timeInNanoSec) / 1_000_000_000
-                debugPrint("Sync execution took \\(timeInSec) seconds")
+                let syncEndTime = DispatchTime.now()
+                let syncTimeElapsed = Double(syncEndTime.uptimeNanoseconds - syncStartTime.uptimeNanoseconds) / 1_000_000_000
+                debugPrint("Sync executions under UI element took \\(syncTimeElapsed) seconds")
             }
         """
         
-        let timingCodeStatements = Parser.parse(source: timingCode).statements
+        let timingCodeStatements = Parser.parse(source: parentProfiler).statements
         modifiedStatements.append(contentsOf: timingCodeStatements)
         
         // Perform DFS traversal for top level statements
@@ -131,13 +132,16 @@ public class UIElementInserter: SyntaxRewriter {
     public func insertProfilingIntoTaskClosure(_ closure: ClosureExprSyntax, closureIndex: inout Int) -> ClosureExprSyntax {
         let profilingCode = """
         
-        
-            let startTime = DispatchTime.now()
+            let asyncStartTime = DispatchTime.now()
             defer {
-                let endTime = DispatchTime.now()
-                let timeInNanoSec = endTime.uptimeNanoseconds - startTime.uptimeNanoseconds
-                let timeInSec = Double(timeInNanoSec) / 1_000_000_000
-                debugPrint("Async Task took \\(timeInSec) seconds")
+                let asyncEndTime = DispatchTime.now()
+                let asyncTimeElapsed = Double(asyncEndTime.uptimeNanoseconds - asyncStartTime.uptimeNanoseconds) / 1_000_000_000
+                
+                
+                Task { @MainActor in 
+                    asyncTime += asyncTimeElapsed
+                    debugPrint("Async executions under UI Element took \\(asyncTime) seconds")
+                }
             }
         """
         
@@ -152,9 +156,10 @@ public class UIElementInserter: SyntaxRewriter {
         return closure.with(\.statements, updatedStatements)
     }
     
+    
     // Insert first half of profiling code before start of escaping closure
     public func insertProfilingIntoEscapingClosures(_ functionCall: FunctionCallExprSyntax, closureIndex: inout Int) -> CodeBlockSyntax {
-        let startTimeVarName = "startTime\(closureIndex)"
+        let startTimeVarName = "asyncStartTime\(closureIndex)"
         closureIndex += 1
         
         let startTimeCode = """
@@ -196,10 +201,10 @@ public class UIElementInserter: SyntaxRewriter {
         let deferCode = """
         
             defer {
-                let endTime = DispatchTime.now()
-                let timeInNanoSec = endTime.uptimeNanoseconds - \(String(describing: startTimeVarName)).uptimeNanoseconds
-                let timeInSec = Double(timeInNanoSec) / 1_000_000_000
-                debugPrint("Escaping closure took \\(timeInSec) seconds")
+                let asyncEndTime = DispatchTime.now()
+                let asyncTimeElapsed = Double(asyncEndTime.uptimeNanoseconds - \(String(describing: startTimeVarName)).uptimeNanoseconds) / 1_000_000_000
+                asyncTime += asyncTimeElapsed
+                debugPrint("Async executions under UI element took \\(asyncTime) seconds")
             }
         """
         

@@ -19,7 +19,7 @@ func main() {
     print("Processing Xcode project at: \(projectPath)") // log
     
     // Perform Call graph generation
-    // Collect all Swift files in the project directory
+   //  Collect all Swift files in the project directory
     let swiftFiles = CallgraphGenApplication.collectSwiftFiles(from: projectPath)
     
     if swiftFiles.isEmpty {
@@ -46,35 +46,6 @@ func main() {
 
 // Call the main function
 main()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
