@@ -7,6 +7,7 @@
 
 import Foundation
 import SwiftParser
+import OrderedCollections
 
 public class CallgraphGenApplication {
     
@@ -29,6 +30,7 @@ public class CallgraphGenApplication {
     }
     
     // Process Swift files and build a call graph
+
     public static func processSwiftFiles(_ swiftFiles: [URL]) {
         // Convert file paths to strings for the CallGraphBuilder
         let filePaths = swiftFiles.map { $0.path }
@@ -41,12 +43,16 @@ public class CallgraphGenApplication {
         }
         
         // Generate the call graph
+       var codebaseCallgraph =  Array<OrderedDictionary<String, [String]>>()
         for fileThatContainsUIElement in processFilesThatContainUIElements {
             let callGraphBuilder = CallGraphBuilder()
             callGraphBuilder.buildGraph(from: fileThatContainsUIElement.path(), in: filePaths)
             print("For file \(fileThatContainsUIElement.lastPathComponent)\n")
             print("Generated Call Graph:\n")
+            codebaseCallgraph.append(callGraphBuilder.callGraph)
+            print(codebaseCallgraph)
             for (function, calls) in callGraphBuilder.callGraph {
+                
                 print("Function: \(function)")
                 for call in calls {
                     print("Calls: \(call)")

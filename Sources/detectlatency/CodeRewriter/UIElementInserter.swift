@@ -18,7 +18,7 @@ public class UIElementInserter: SyntaxRewriter {
         // Ensure profiling is inserted at the start
         let parentProfiler = """
         
-            var asyncTime: Double
+            var asyncTime: Double = 0
             asyncTime += 0
             let syncStartTime = DispatchTime.now()
             defer {

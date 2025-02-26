@@ -34,8 +34,8 @@ class MethodProfilingInserter: SyntaxRewriter {
         // Prepare a timing code block to be inserted at the top of the function body.
         let parentProfiler = """
         
-            var asyncTime: Double?
-            asyncTime! += 0
+            var asyncTime: Double = 0
+            asyncTime += 0
             let syncStartTime = DispatchTime.now()
             defer {
                 let syncEndTime = DispatchTime.now()
