@@ -9,6 +9,7 @@
 import Foundation
 import SwiftSyntax
 
+// Service that handles the code detection, generation and insertion into the main UI Element scope 
 public class Application {
     private let fileFinder: SwiftFileFinder
     private let fileProcessor: SwiftFileProcessor

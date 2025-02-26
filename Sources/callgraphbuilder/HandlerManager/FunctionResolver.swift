@@ -9,7 +9,7 @@ import Foundation
 import SwiftSyntax
 import SwiftParser
 
-// Service that detects functions
+// Service that detects functions 
 public class FunctionResolver: SyntaxVisitor {
     let targetFunction: String
     var collectedData: (
@@ -146,9 +146,6 @@ public class FunctionResolver: SyntaxVisitor {
 
         let timingCodeInserter = MethodProfilingInserter(message: name)
         let modifiedNode = timingCodeInserter.visit(functionNode).as(FunctionDeclSyntax.self) ?? functionNode
-        print("\nModified node is \n\(modifiedNode.description)")
-        
-
         FunctionResolver.modifiedFunctions.insert(name)
         
         // Convert to DeclSyntax and write back to the file

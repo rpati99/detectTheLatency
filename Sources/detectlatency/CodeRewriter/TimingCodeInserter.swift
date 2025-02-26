@@ -2,7 +2,8 @@ import SwiftSyntax
 import SwiftSyntaxBuilder
 import SwiftParser
 
-public class TimingCodeInserter: SyntaxRewriter, AsyncInsertable {
+// Legacy code inserter service - Status deprecated
+public class TimingCodeInserter: SyntaxRewriter {
     
     // Override the visit method for ClosureExprSyntax
 //    public override func visit(_ node: ClosureExprSyntax) -> ExprSyntax {

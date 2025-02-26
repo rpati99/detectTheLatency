@@ -10,7 +10,7 @@ import SwiftParser
 import Foundation
 import OrderedCollections // for ordered hashmap from swift-collections dependency
 
-// Class to build the call graph
+// Service that handles generation of Function call relationship
 class CallGraphBuilder {
     var callGraph = OrderedDictionary<String, [String]>() // Stores the call graph: function -> [called functions]
     
@@ -32,9 +32,7 @@ class CallGraphBuilder {
         
         // Enqueue all functions from the initial file (e.g., ContentView.swift)
         enqueueFunctions(from: filePath)
-        
-        
-        
+    
         // Process unresolved functions until there are none left
         while !unresolvedFunctions.isEmpty {
             let function = unresolvedFunctions.removeFirst()
@@ -62,7 +60,6 @@ class CallGraphBuilder {
         } catch {
 //            print("Error processing file for gathering functions under SwiftUI Elements to enqueue, \(error.localizedDescription) ")
         }
-        
     }
     
     

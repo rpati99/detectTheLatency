@@ -1,8 +1,15 @@
+//
+//  UIElementInserter.swift
+//  callgraphbuilder
+//
+//  Created by Rachit Prajapati on 1/22/25.
+//
+
 import SwiftSyntax
 import SwiftSyntaxBuilder
 import SwiftParser
 
-public class TimingCodeInserter2: SyntaxRewriter {
+public class UIElementInserter: SyntaxRewriter {
     public override func visit(_ node: ClosureExprSyntax) -> ExprSyntax {
         var closureIndex = 0
         var modifiedStatements = CodeBlockItemListSyntax { }

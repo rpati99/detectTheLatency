@@ -1,10 +1,17 @@
+//
+//  MethodProfilingInserter.swift
+//  callgraphbuilder
+//
+//  Created by Rachit Prajapati on 1/22/25.
+//
+
 import SwiftSyntax
 import SwiftSyntaxBuilder
 import SwiftParser
 
 
 class MethodProfilingInserter: SyntaxRewriter {
-    let message: String
+    let message: String // carries the name of existing function for specific output
     // Global set to track which functions have already been modified.
     nonisolated(unsafe) static var modifiedFunctions: Set<String> = []
 
@@ -26,7 +33,6 @@ class MethodProfilingInserter: SyntaxRewriter {
 
         // Prepare a timing code block to be inserted at the top of the function body.
         let timingCode = """
-        
         
             let startTime = DispatchTime.now()
             defer {
@@ -197,7 +203,7 @@ class MethodProfilingInserter: SyntaxRewriter {
     public func insertProfilingIntoEscapingClosure(_ closure: ClosureExprSyntax, startTimeVarName: String, closureIndex: inout Int) -> ClosureExprSyntax {
         let deferCode = """
         
-        
+
             defer {
                 let endTime = DispatchTime.now()
                 let timeInNanoSec = endTime.uptimeNanoseconds - \(startTimeVarName).uptimeNanoseconds
@@ -231,6 +237,7 @@ class MethodProfilingInserter: SyntaxRewriter {
         return ifNode.with(\.body, updatedBody).with(\.elseBody, updatedElse)
     }
 
+    // runs when the traversal detects the conditional statements and loop statements to perform insertions under async components
     private func processCodeBlock(_ block: CodeBlockSyntax, closureIndex: inout Int) -> CodeBlockSyntax {
         var newItems = CodeBlockItemListSyntax { }
         for stmt in block.statements {
