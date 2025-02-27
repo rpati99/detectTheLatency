@@ -41,7 +41,7 @@ class MethodProfilingInserter: SyntaxRewriter {
             defer {
                 let syncEndTime = DispatchTime.now()
                 syncTime = Double(syncEndTime.uptimeNanoseconds - syncStartTime.uptimeNanoseconds) / 1_000_000_000
-                recordExecutionTime(functionName: "\(functionName)", syncTime: syncTime, asyncTime: asyncTime)
+                recordExecutionTime(functionName: "\(functionName)", functionTime: syncTime, asyncTime: asyncTime)
             }
         
         """
@@ -156,7 +156,7 @@ class MethodProfilingInserter: SyntaxRewriter {
                  
                 Task { @MainActor in 
                     asyncTime += asyncTimeElapsed
-                recordExecutionTime(functionName: "\(functionName)", syncTime: syncTime, asyncTime: asyncTime)
+                recordExecutionTime(functionName: "\(functionName)", functionTime: syncTime, asyncTime: asyncTime)
                 }
             }
         
@@ -213,7 +213,7 @@ class MethodProfilingInserter: SyntaxRewriter {
                 let asyncEndTime = DispatchTime.now()
                 let asyncTimeElapsed = Double(asyncEndTime.uptimeNanoseconds - \(String(describing: startTimeVarName)).uptimeNanoseconds) / 1_000_000_000
                 asyncTime += asyncTimeElapsed
-                recordExecutionTime(functionName: "\(functionName)", syncTime: syncTime, asyncTime: asyncTime)
+                recordExecutionTime(functionName: "\(functionName)", functionTime: syncTime, asyncTime: asyncTime)
             }
         
         """

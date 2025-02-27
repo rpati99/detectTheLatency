@@ -48,7 +48,7 @@ public class CallgraphGenApplication {
             let callGraphBuilder = CallGraphBuilder()
             callGraphBuilder.buildGraph(from: fileThatContainsUIElement.path(), in: filePaths)
             print("For file \(fileThatContainsUIElement.lastPathComponent)\n")
-            print("Generated Call Graph internallyt:\n")
+            print("Generated Call Graph internal log:\n")
             codebaseCallgraph.append(callGraphBuilder.callGraph)
            
             for (function, calls) in callGraphBuilder.callGraph {
@@ -59,9 +59,7 @@ public class CallgraphGenApplication {
                 }
             }
         }
-        print("\n code below\n")
         createCallGraphLoggerFile(at: path, callGraphData: codebaseCallgraph)
-        print("\n graph code\n")
     }
 
     
@@ -99,17 +97,17 @@ public class CallgraphGenApplication {
 
             private init() {}
 
-            public func updateExecutionTime(for functionName: String, syncTime: Double, asyncTime: Double) {
+            public func updateExecutionTime(for functionName: String, functionTime: Double, asyncTime: Double) {
                 for i in callGraph.indices {
                     for j in callGraph[i].indices {
                         if callGraph[i][j].0 == functionName {
-                            callGraph[i][j].1.executionTime = (syncTime, asyncTime)
+                            callGraph[i][j].1.executionTime = (functionTime, asyncTime)
                             return
                         }
                     }
                 }
                 callGraph.append([
-                    (functionName, CallGraphNode(calledFunctions: [], executionTime: (syncTime, asyncTime)))
+                    (functionName, CallGraphNode(calledFunctions: [], executionTime: (functionTime, asyncTime)))
                 ])
             }
 
@@ -117,9 +115,9 @@ public class CallgraphGenApplication {
                 print("----- Call Graph -----")
                 for graph in callGraph {
                     for (name, node) in graph {
-                        let syncTimeStr = node.executionTime.0.map { "\\($0) sec" } ?? "n/a"
+                        let functionTimeStr = node.executionTime.0.map { "\\($0) sec" } ?? "n/a"
                         let asyncTimeStr = node.executionTime.1.map { "\\($0) sec" } ?? "n/a"
-                        print("Function: \\(name) | Sync Time: \\(syncTimeStr) | AsyncTime Time: \\(asyncTimeStr) | Calls: \\(node.calledFunctions)")
+                        print("Function: \\(name) | Function Time: \\(functionTimeStr) | Async Time: \\(asyncTimeStr) | Calls: \\(node.calledFunctions)")
                     }
                 }
                 print("----------------------")
@@ -127,8 +125,8 @@ public class CallgraphGenApplication {
         }
 
         // Global function to be called by the inserted profiling code.
-        public func recordExecutionTime(functionName: String, syncTime: Double, asyncTime: Double) {
-            CallGraphLogger.shared.updateExecutionTime(for: functionName, syncTime: syncTime, asyncTime: asyncTime)
+        public func recordExecutionTime(functionName: String, functionTime: Double, asyncTime: Double) {
+            CallGraphLogger.shared.updateExecutionTime(for: functionName, functionTime: functionTime, asyncTime: asyncTime)
             
             // Print the call graph after updating execution time
             CallGraphLogger.shared.printCallGraph()

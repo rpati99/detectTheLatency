@@ -93,13 +93,10 @@ public class FunctionBodyVisitor: SyntaxVisitor {
         var baseExpression: ExprSyntax = functionCall.calledExpression
         var lastFunctionName: String? = nil
 
-        print("Starting traversal for function call: \(baseExpression)")
-
         // Traverse forward through the chain
         while let memberAccess = baseExpression.as(MemberAccessExprSyntax.self) {
             lastFunctionName = memberAccess.declName.baseName.text  // Store function name
             return lastFunctionName
-//            print("last func name \(lastFunctionName)")
 //            
 //            if let deeperBase = memberAccess.base {
 //                baseExpression = deeperBase
@@ -110,8 +107,6 @@ public class FunctionBodyVisitor: SyntaxVisitor {
         // If a chained function was found, return it; otherwise, return direct call
         return lastFunctionName ?? functionCall.calledExpression.as(DeclReferenceExprSyntax.self)?.baseName.text
     }
-    
-    
     
     /// Detects `if-else` statements
     public override func visit(_ node: IfExprSyntax) -> SyntaxVisitorContinueKind {

@@ -27,6 +27,7 @@ public class UIElementInserter: SyntaxRewriter {
                 debugPrint("Sync executions under UI element took \\(syncTimeElapsed) seconds")
             }
         
+        
         """
         
         let timingCodeStatements = Parser.parse(source: parentProfiler).statements
