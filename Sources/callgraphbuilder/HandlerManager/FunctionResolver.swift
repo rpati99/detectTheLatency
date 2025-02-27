@@ -189,51 +189,6 @@ public class FunctionResolver: SyntaxVisitor {
 }
 
 
-// Dummy injector service
-//class InsertPrintRewriter: SyntaxRewriter {
-//    let message: String
-//    nonisolated(unsafe) static var modifiedFunctions: Set<String> = [] // Global set to track modified functions
-//
-//    init(message: String) {
-//        self.message = message
-//        super.init()
-//    }
-//
-//    override func visit(_ node: FunctionDeclSyntax) -> DeclSyntax {
-//        guard let body = node.body else { return super.visit(node) }
-//
-//        if InsertPrintRewriter.modifiedFunctions.contains(node.name.text) {
-//            return DeclSyntax(node)
-//        } else {
-//
-//            // Create a print statement
-//            let printStatement = "print(\"\(message)\")"
-//            let parsedPrintStatement = Parser.parse(source: printStatement)
-//
-//            // Extract first statement as a `CodeBlockItemSyntax`
-//            guard let firstStatement = parsedPrintStatement.statements.first?.as(CodeBlockItemSyntax.self) else {
-//                return super.visit(node)
-//            }
-//
-//            // Convert the single statement into a `CodeBlockItemListSyntax`
-//            let newStatements =
-//                [firstStatement] + body.statements
-//
-//
-//            // Insert the modified statements back into the function body
-//            let modifiedBody = body.with(\.statements, newStatements)
-//
-//            InsertPrintRewriter.modifiedFunctions.insert(node.name.text)
-//
-//            // Return modified function node, explicitly casting to `DeclSyntax`
-//            return super.visit(node.with(\.body, modifiedBody))
-//                .as(DeclSyntax.self) ?? DeclSyntax(node)
-//        }
-//    }
-//}
-
-
-
 class ReplaceFunctionRewriter: SyntaxRewriter {
     let targetFunction: String
     let newFunction: FunctionDeclSyntax

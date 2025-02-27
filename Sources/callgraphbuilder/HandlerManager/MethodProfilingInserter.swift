@@ -36,11 +36,12 @@ class MethodProfilingInserter: SyntaxRewriter {
         
             var asyncTime: Double = 0
             asyncTime += 0
+            var syncTime: Double = 0
             let syncStartTime = DispatchTime.now()
             defer {
                 let syncEndTime = DispatchTime.now()
-                let syncTimeElapsed = Double(syncEndTime.uptimeNanoseconds - syncStartTime.uptimeNanoseconds) / 1_000_000_000
-                debugPrint("Sync executions under \(functionName) took \\(syncTimeElapsed) seconds")
+                syncTime = Double(syncEndTime.uptimeNanoseconds - syncStartTime.uptimeNanoseconds) / 1_000_000_000
+                recordExecutionTime(functionName: "\(functionName)", syncTime: syncTime, asyncTime: asyncTime)
             }
         """
         
@@ -154,7 +155,7 @@ class MethodProfilingInserter: SyntaxRewriter {
                  
                 Task { @MainActor in 
                     asyncTime += asyncTimeElapsed
-                    debugPrint("Async executions under \(functionName) took \\(asyncTime) seconds")
+                recordExecutionTime(functionName: "\(functionName)", syncTime: syncTime, asyncTime: asyncTime)
                 }
             }
         """
@@ -210,7 +211,7 @@ class MethodProfilingInserter: SyntaxRewriter {
                 let asyncEndTime = DispatchTime.now()
                 let asyncTimeElapsed = Double(asyncEndTime.uptimeNanoseconds - \(String(describing: startTimeVarName)).uptimeNanoseconds) / 1_000_000_000
                 asyncTime += asyncTimeElapsed
-                debugPrint("Async executions under \(functionName) \\(asyncTime) seconds")
+                recordExecutionTime(functionName: "\(functionName)", syncTime: syncTime, asyncTime: asyncTime)
             }
         """
         let deferStmts = Parser.parse(source: deferCode).statements
