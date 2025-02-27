@@ -172,11 +172,6 @@ public class FunctionResolver: SyntaxVisitor {
             // Write the updated source code back to the file
             try modifiedSource
                 .write(to: filePath, atomically: true, encoding: .utf8)
-            
-            // ✅ Read the file again to confirm the change
-                  let confirmRead = try String(contentsOf: filePath, encoding: .utf8)
-                  print("\n🔍 [Confirm Write] File Content After Write:\n\(confirmRead)")
-            
         } catch {
             print(
                 "[Error] Failed to write updated file \(filePath.path): \(error.localizedDescription)"

@@ -36,7 +36,7 @@ public struct SwiftFileProcessor : FileProcessable {
             let modifyContent = syntaxService.modifySyntax(of: parsedContent, filePath: url)
 
             // Step 5. Writing back the new code (in form of SourceFileSyntax) in the respective .swift file
-//            writerService.writeModifiedCodeToSourceFile(modifyContent, to: url)
+            writerService.writeModifiedCodeToSourceFile(modifyContent, to: url)
         } catch let fileProcessingError {
             // Handle Error
             debugPrint("Error:- Couldn't process files \(fileProcessingError.localizedDescription)")

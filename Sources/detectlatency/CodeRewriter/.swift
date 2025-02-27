@@ -341,7 +341,7 @@ public class TimingCodeInserter: SyntaxRewriter {
     
 
         // Return the modified parent block with all the statements (including mutated Task blocks)
-//        return CodeBlockItemSyntax(item: .codeBlock(modifiedCodeBlock))
+        return CodeBlockItemSyntax(item: .codeBlock(modifiedCodeBlock))
     }
     
     private func handleNestedTaskInsertion(taskBlock: FunctionCallExprSyntax) -> FunctionCallExprSyntax? {

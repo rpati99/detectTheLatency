@@ -26,6 +26,7 @@ public class UIElementInserter: SyntaxRewriter {
                 let syncTimeElapsed = Double(syncEndTime.uptimeNanoseconds - syncStartTime.uptimeNanoseconds) / 1_000_000_000
                 debugPrint("Sync executions under UI element took \\(syncTimeElapsed) seconds")
             }
+        
         """
         
         let timingCodeStatements = Parser.parse(source: parentProfiler).statements
@@ -143,6 +144,7 @@ public class UIElementInserter: SyntaxRewriter {
                     debugPrint("Async executions under UI Element took \\(asyncTime) seconds")
                 }
             }
+        
         """
         
         let profilingCodeStatements = Parser.parse(source: profilingCode).statements
@@ -206,6 +208,7 @@ public class UIElementInserter: SyntaxRewriter {
                 asyncTime += asyncTimeElapsed
                 debugPrint("Async executions under UI element took \\(asyncTime) seconds")
             }
+        
         """
         
         let deferCodeStatements = Parser.parse(source: deferCode).statements

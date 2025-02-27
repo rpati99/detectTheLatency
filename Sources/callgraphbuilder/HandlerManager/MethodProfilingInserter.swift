@@ -43,6 +43,7 @@ class MethodProfilingInserter: SyntaxRewriter {
                 syncTime = Double(syncEndTime.uptimeNanoseconds - syncStartTime.uptimeNanoseconds) / 1_000_000_000
                 recordExecutionTime(functionName: "\(functionName)", syncTime: syncTime, asyncTime: asyncTime)
             }
+        
         """
         
         let timingCodeStatements = Parser.parse(source: parentProfiler).statements
@@ -158,6 +159,7 @@ class MethodProfilingInserter: SyntaxRewriter {
                 recordExecutionTime(functionName: "\(functionName)", syncTime: syncTime, asyncTime: asyncTime)
                 }
             }
+        
         """
         let profilingStmts = Parser.parse(source: profilingCode).statements
         var updatedStmts = profilingStmts
@@ -213,6 +215,7 @@ class MethodProfilingInserter: SyntaxRewriter {
                 asyncTime += asyncTimeElapsed
                 recordExecutionTime(functionName: "\(functionName)", syncTime: syncTime, asyncTime: asyncTime)
             }
+        
         """
         let deferStmts = Parser.parse(source: deferCode).statements
         var updatedStmts = deferStmts
