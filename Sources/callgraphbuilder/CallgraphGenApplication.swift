@@ -145,7 +145,7 @@ public class CallgraphGenApplication {
         }
         
         let filePath = "\(sourceFolder)/CallGraphLogger.swift"
-        
+        print("filepath is \(filePath)")
         // Generate CallGraphLogger.swift code dynamically
         let generatedCode = exportCallGraphAsCode(codebaseCallgraph: callGraphData)
         
@@ -156,25 +156,24 @@ public class CallgraphGenApplication {
         }
     }
     
-    /// Finds the first subdirectory that contains `.swift` files inside the project folder.
+    /// Finds the main source directory in an Xcode project by looking for a subdirectory with the same name as the project.
     static func findSourceDirectory(in projectPath: String) -> String? {
         let fileManager = FileManager.default
         let projectURL = URL(fileURLWithPath: projectPath)
-
+        let projectName = projectURL.lastPathComponent  // Extract project name
+        
         do {
             let subdirectories = try fileManager.contentsOfDirectory(at: projectURL, includingPropertiesForKeys: nil)
-                .filter { $0.hasDirectoryPath } // Get only directories
+                .filter { $0.hasDirectoryPath && !$0.path.hasSuffix(".xcodeproj") } // Ignore .xcodeproj
             
             for folder in subdirectories {
-                let swiftFiles = try fileManager.contentsOfDirectory(atPath: folder.path)
-                    .filter { $0.hasSuffix(".swift") }
-                
-                if !swiftFiles.isEmpty {
-                    return folder.path // Return the first folder that contains Swift files
+                if folder.lastPathComponent == projectName {  // Match directory name with project name
+                    return folder.path // Insert the file inside this directory
                 }
             }
             
         } catch {
+            print("Error : \(error.localizedDescription)")
         }
         
         return nil

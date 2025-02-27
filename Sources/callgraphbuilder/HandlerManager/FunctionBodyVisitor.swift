@@ -19,7 +19,6 @@ public class FunctionBodyVisitor: SyntaxVisitor {
         super.init(viewMode: .sourceAccurate)
     }
     
-    
     public override func visit(_ node: FunctionCallExprSyntax) -> SyntaxVisitorContinueKind {
         if let calledFunction = node.calledExpression.as(DeclReferenceExprSyntax.self)?.baseName.text {
             //            print("[FunctionBodyVisitor] Found function call: \(calledFunction)")
@@ -90,7 +89,7 @@ public class FunctionBodyVisitor: SyntaxVisitor {
     // Extracts the final function name from any chained calls
     // Extracts the function name from a chained call (e.g., self.apiService.performBackgroundWork())
     private func extractFunctionName(from functionCall: FunctionCallExprSyntax) -> String? {
-        var baseExpression: ExprSyntax = functionCall.calledExpression
+        let baseExpression: ExprSyntax = functionCall.calledExpression
         var lastFunctionName: String? = nil
 
         // Traverse forward through the chain
