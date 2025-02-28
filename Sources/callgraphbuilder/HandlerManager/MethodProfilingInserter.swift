@@ -93,6 +93,18 @@ class MethodProfilingInserter: SyntaxRewriter {
                 return modifiedStatements
             }
         }
+        
+        // --- Handle `withTaskGroup` ---
+            if let taskGroupCall = statement.item.as(FunctionCallExprSyntax.self),
+               let functionName = taskGroupCall.calledExpression.as(DeclReferenceExprSyntax.self)?.baseName.text,
+               functionName == "withTaskGroup" {
+                if let taskGroupClosure = taskGroupCall.trailingClosure {
+                    let updatedTaskGroupClosure = insertProfilingIntoTaskClosure(taskGroupClosure, closureIndex: &closureIndex, functionName: functionName)
+                    let updatedStatement = statement.with(\.item, .expr(ExprSyntax(taskGroupCall.with(\.trailingClosure, updatedTaskGroupClosure))))
+                    modifiedStatements.append(updatedStatement)
+                    return modifiedStatements
+                }
+            }
 
         // --- Handle escaping closures ---
         if let functionCall = statement.item.as(FunctionCallExprSyntax.self),
