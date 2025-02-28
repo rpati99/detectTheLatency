@@ -18,8 +18,8 @@ public class UIElementInserter: SyntaxRewriter {
         // Ensure profiling is inserted at the start
         let parentProfiler = """
         
-            var asyncTime: Double = 0
-            asyncTime += 0
+            var maxAsyncTime: Double = 0
+            maxAsyncTime += 0
             let syncStartTime = DispatchTime.now()
             defer {
                 let syncEndTime = DispatchTime.now()
@@ -141,8 +141,8 @@ public class UIElementInserter: SyntaxRewriter {
                 
                 
                 Task { @MainActor in 
-                    asyncTime += asyncTimeElapsed
-                    debugPrint("Async executions under UI Element took \\(asyncTime) seconds")
+                    maxAsyncTime = max(maxAsyncTime, asyncTimeElapsed)
+                    debugPrint("Async executions under UI Element took \\(maxAsyncTime) seconds")
                 }
             }
         
@@ -206,8 +206,8 @@ public class UIElementInserter: SyntaxRewriter {
             defer {
                 let asyncEndTime = DispatchTime.now()
                 let asyncTimeElapsed = Double(asyncEndTime.uptimeNanoseconds - \(String(describing: startTimeVarName)).uptimeNanoseconds) / 1_000_000_000
-                asyncTime += asyncTimeElapsed
-                debugPrint("Async executions under UI element took \\(asyncTime) seconds")
+                maxAsyncTime = max(maxAsyncTime, asyncTimeElapsed)
+                debugPrint("Async executions under UI element took \\(maxAsyncTime) seconds")
             }
         
         """

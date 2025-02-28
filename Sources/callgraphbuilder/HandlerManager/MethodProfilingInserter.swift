@@ -34,14 +34,14 @@ class MethodProfilingInserter: SyntaxRewriter {
         // Prepare a timing code block to be inserted at the top of the function body.
         let parentProfiler = """
         
-            var asyncTime: Double = 0
-            asyncTime += 0
+            var maxAsyncTime: Double = 0
+            maxAsyncTime += 0
             var syncTime: Double = 0
             let syncStartTime = DispatchTime.now()
             defer {
                 let syncEndTime = DispatchTime.now()
                 syncTime = Double(syncEndTime.uptimeNanoseconds - syncStartTime.uptimeNanoseconds) / 1_000_000_000
-                recordExecutionTime(functionName: "\(functionName)", functionTime: syncTime, asyncTime: asyncTime)
+                recordExecutionTime(functionName: "\(functionName)", functionTime: syncTime, asyncTime: maxAsyncTime)
             }
         
         """
@@ -155,8 +155,8 @@ class MethodProfilingInserter: SyntaxRewriter {
                 
                  
                 Task { @MainActor in 
-                    asyncTime += asyncTimeElapsed
-                recordExecutionTime(functionName: "\(functionName)", functionTime: syncTime, asyncTime: asyncTime)
+                maxAsyncTime = max(maxAsyncTime, asyncTimeElapsed)
+                recordExecutionTime(functionName: "\(functionName)", functionTime: syncTime, asyncTime: maxAsyncTime)
                 }
             }
         
@@ -212,8 +212,8 @@ class MethodProfilingInserter: SyntaxRewriter {
             defer {
                 let asyncEndTime = DispatchTime.now()
                 let asyncTimeElapsed = Double(asyncEndTime.uptimeNanoseconds - \(String(describing: startTimeVarName)).uptimeNanoseconds) / 1_000_000_000
-                asyncTime += asyncTimeElapsed
-                recordExecutionTime(functionName: "\(functionName)", functionTime: syncTime, asyncTime: asyncTime)
+                maxAsyncTime = max(maxAsyncTime, asyncTimeElapsed)
+                recordExecutionTime(functionName: "\(functionName)", functionTime: syncTime, asyncTime: maxAsyncTime)
             }
         
         """
