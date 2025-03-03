@@ -8,9 +8,9 @@
 import SwiftSyntax
 import SwiftParser
 import Foundation
-import OrderedCollections // for ordered hashmap from swift-collections dependency
+import OrderedCollections // Ordered hashmap to maintain order of called methods
 
-// Service that handles generation of Function call relationship
+// Service that handles generation of Call graph
 class CallGraphBuilder {
     var callGraph = OrderedDictionary<String, [String]>() // Stores the call graph: function -> [called functions]
     
@@ -58,11 +58,12 @@ class CallGraphBuilder {
                 unresolvedFunctions.append(function)
             }
         } catch {
-//            print("Error processing file for gathering functions under SwiftUI Elements to enqueue, \(error.localizedDescription) ")
+            print("Callgraphbuilder.swift: Error processing file for gathering functions under SwiftUI Elements to enqueue, \(error.localizedDescription) ")
         }
     }
     
     
+    // Class method that visits the codebase to locate the unresolved function and collects other functions if called inside it. 
     private func resolveFunction(_ functionName: String, in codebasePaths: [String]) {
         // Skip if the function has already been resolved
         if visitedFunctions.contains(functionName) {

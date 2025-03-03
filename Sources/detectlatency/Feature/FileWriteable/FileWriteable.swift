@@ -8,6 +8,7 @@
 import Foundation
 import SwiftSyntax
 
+// Interface to handle writing on Swift files 
 public protocol FileWriteable {
     func writeModifiedCodeToSourceFile(_ modifiedContent: SourceFileSyntax, to url: URL)
 }

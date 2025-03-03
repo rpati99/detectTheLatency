@@ -9,7 +9,7 @@
 import Foundation
 import SwiftSyntax
 
-// Service that handles the code detection, generation and insertion into the main UI Element scope 
+// Parent service of detectlatency module of that performs profiling setup for interactive UI elements.
 public class Application {
     private let fileFinder: SwiftFileFinder
     private let fileProcessor: SwiftFileProcessor
@@ -28,7 +28,7 @@ public class Application {
         }
         
         let swiftFiles = fileFinder.findSwiftFiles(directory: arguments[1]) // hold the files that are of .swift format
-        fileProcessor.process(files: swiftFiles) // Perform the operation of detecting the latency
+        fileProcessor.process(files: swiftFiles) // Perform setup of profiling under UI elements
     }
 }
 

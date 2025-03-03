@@ -7,7 +7,7 @@
 
 import Foundation
 
-// Gateway of package which makes the call graph and profiles that code that runs on user interaction (that is present under action scope of UI Elements)
+// GATEWAY of package which performs setup to profile code present inside interactive elements in SwiftUI application. 
 func main() {
     // Get project path from command-line arguments
     guard CommandLine.arguments.count > 1 else {
@@ -19,8 +19,8 @@ func main() {
     print("Processing Xcode project at: \(projectPath)") // log
 
 
-    // Perform Call graph generation
-   //  Collect all Swift files in the project directory
+    // CALLGRAPBUILDER module
+    // Performs setup to create output to view profiling data of interactive code
     let swiftFiles = CallgraphGenApplication.collectSwiftFiles(from: projectPath)
     
     if swiftFiles.isEmpty {
@@ -31,7 +31,8 @@ func main() {
     }
     
     
-    // Perform latency profiling
+    // DETECTLATENCY MODULE
+    // Performs profiling setup under interactive UI Elements. 
     let syntaxModifier = SwiftSyntaxModifier()
     let fileWriter = SwiftFileWriter()
     let fileProcessor = SwiftFileProcessor(syntaxService: syntaxModifier, writerService: fileWriter)

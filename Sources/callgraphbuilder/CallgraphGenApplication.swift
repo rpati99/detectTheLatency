@@ -9,6 +9,7 @@ import Foundation
 import SwiftParser
 import OrderedCollections
 
+// Parent service of callgraphbuilder module that performs insertion of profiling code inside methods, creation of logger class code and injecting the code file into the codevbase fpr graph output. 
 public class CallgraphGenApplication {
     
     // collects the Swift files from the provided codebase
@@ -29,8 +30,7 @@ public class CallgraphGenApplication {
         return swiftFiles
     }
     
-    // Process Swift files and build a call graph
-
+    // Process Swift files, builds call graph, creates a logger class file that holds call graph, injects the file into codebase.
     public static func processSwiftFiles(_ swiftFiles: [URL], path: String) {
         // Convert file paths to strings for the CallGraphBuilder
         let filePaths = swiftFiles.map { $0.path }
@@ -63,7 +63,7 @@ public class CallgraphGenApplication {
     }
 
     
-    // Converts the generated call graph into Swift source code.
+    // Class method that generates the logger class code.
     static func exportCallGraphAsCode(codebaseCallgraph: [OrderedDictionary<String, [String]>]) -> String {
         var output = """
         // Generated Call Graph
@@ -71,14 +71,17 @@ public class CallgraphGenApplication {
         
         import Foundation 
         
+        // Object that holds data for each method that is used under interactive SwiftUI element scope. 
         struct CallGraphNode { 
             var calledFunctions: [String] 
             var executionTime: (Double?, Double?)  // (inclusive, exclusive) execution times
         }
 
+        // Logger class that performs output of profiled data into console log.
         public class CallGraphLogger {
             static let shared = CallGraphLogger()
             
+            // Attribute that holds the generated call graph of interactive elements in a codebase.
             var callGraph: [[(String, CallGraphNode)]] = [
         """
 
@@ -97,6 +100,7 @@ public class CallgraphGenApplication {
 
             private init() {}
 
+            // Performs merging of profiled data into the call graph
             public func updateExecutionTime(for functionName: String, functionTime: Double, asyncTime: Double) {
                 for i in callGraph.indices {
                     for j in callGraph[i].indices {
@@ -111,6 +115,7 @@ public class CallgraphGenApplication {
                 ])
             }
 
+            // Iterates the call graph and prints it.
             public func printCallGraph() {
                 print("----- Call Graph -----")
                 for graph in callGraph {
@@ -124,7 +129,7 @@ public class CallgraphGenApplication {
             }
         }
 
-        // Global function to be called by the inserted profiling code.
+        // Global convenience method to record profiling data and merge into the call graph.
         public func recordExecutionTime(functionName: String, functionTime: Double, asyncTime: Double) {
             CallGraphLogger.shared.updateExecutionTime(for: functionName, functionTime: functionTime, asyncTime: asyncTime)
             
@@ -136,7 +141,7 @@ public class CallgraphGenApplication {
         return output
     }
     
-    // Function to create and inject CallGraphLogger.swift
+    // Class method that creates file of logger class code and injects into the codebase.
     static func createCallGraphLoggerFile(at projectPath: String, callGraphData: [OrderedDictionary<String, [String]>]) {
         
         // Step 1: Identify the correct subdirectory that contains Swift files
@@ -156,7 +161,7 @@ public class CallgraphGenApplication {
         }
     }
     
-    /// Finds the main source directory in an Xcode project by looking for a subdirectory with the same name as the project.
+    // Class method that finds the suitable source directory for file to be inserted at.
     static func findSourceDirectory(in projectPath: String) -> String? {
         let fileManager = FileManager.default
         let projectURL = URL(fileURLWithPath: projectPath)
@@ -179,16 +184,16 @@ public class CallgraphGenApplication {
         return nil
     }
     
-    // filters and collects file of Swift format from directory
+    // Class method that filters and collects Swift format files from project directory.
     public static func initiateFilteringToFindFirstFileThatContainsUIElements(filePath: URL) -> Bool {
         do {
             let fileContents = try String.init(contentsOf: filePath, encoding: .utf8)
             let processedFileContent = fileContents.trimmingCharacters(in: .whitespacesAndNewlines)
             let parsedContent = Parser.parse(source: processedFileContent)
-            let buttonIndicator = InteractiveElementFinder(viewMode: .sourceAccurate)
-            buttonIndicator.walk(parsedContent)
+            let interactiveElementFinder = InteractiveElementFinder(viewMode: .sourceAccurate)
+            interactiveElementFinder.walk(parsedContent)
             
-            if buttonIndicator.containsInteractiveElement {
+            if interactiveElementFinder.containsInteractiveElement {
                 return true
             } else {
                 return false

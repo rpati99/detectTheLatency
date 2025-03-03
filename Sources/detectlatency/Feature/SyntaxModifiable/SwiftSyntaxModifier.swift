@@ -7,6 +7,7 @@
 import Foundation
 import SwiftSyntax
 
+// Service that handles the updating code of UI element with profiling code.
 public struct SwiftSyntaxModifier: SyntaxModifiable {
     public func modifySyntax(of parsedContent: SourceFileSyntax, filePath: URL) -> SourceFileSyntax {
         
@@ -16,7 +17,7 @@ public struct SwiftSyntaxModifier: SyntaxModifiable {
         var closureReplacement: [ClosureExprSyntax: ClosureExprSyntax] = [:] // Dictionary to handle the unmodified and modified code
                                  
         for closure in codeExtractor.closureNodes { // Iterating capture closure nodes that hold the code and adding the profiling logic
-            let inserter = UIElementInserter()
+            let inserter = UIElementInserter() // modifies old code with profiling code
             let newClosure = inserter.visit(closure).as(ClosureExprSyntax.self)! // Adding the profiling code
             closureReplacement[closure] = newClosure // Maintain hashmap of old code and new code
         }

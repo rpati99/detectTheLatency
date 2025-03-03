@@ -6,6 +6,7 @@
 
 import Foundation
 
+// Interface to handle processing of Swift files
 public protocol FileProcessable {
     func process(files: [URL])
 }

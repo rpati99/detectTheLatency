@@ -10,6 +10,7 @@ import SwiftSyntax
 import SwiftParser
 
 
+// Performs setup handling for profiling of UI Elements. 
 public struct SwiftFileProcessor : FileProcessable {
     
     private let syntaxService: SwiftSyntaxModifier

@@ -8,6 +8,7 @@
 import Foundation
 import SwiftSyntax
 
+// Interface to handle modification of code inside Swift files 
 public protocol SyntaxModifiable {
     func modifySyntax(of parsedContent: SourceFileSyntax, filePath: URL) -> SourceFileSyntax
 }

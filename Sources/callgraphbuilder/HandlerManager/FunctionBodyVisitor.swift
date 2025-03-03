@@ -19,6 +19,7 @@ public class FunctionBodyVisitor: SyntaxVisitor {
         super.init(viewMode: .sourceAccurate)
     }
     
+    // visits the function statements and checks for standalone functions and functions that are declared as object methods.
     public override func visit(_ node: FunctionCallExprSyntax) -> SyntaxVisitorContinueKind {
         if let calledFunction = node.calledExpression.as(DeclReferenceExprSyntax.self)?.baseName.text {
             //            print("[FunctionBodyVisitor] Found function call: \(calledFunction)")
@@ -48,6 +49,7 @@ public class FunctionBodyVisitor: SyntaxVisitor {
         return .visitChildren
     }
     
+    // Legacy visitor to handle method declarations as let/var/
     /// Handles async function assignments (`async let task = function()`)
     //    public override func visit(_ node: VariableDeclSyntax) -> SyntaxVisitorContinueKind {
     //        for binding in node.bindings {
@@ -63,6 +65,7 @@ public class FunctionBodyVisitor: SyntaxVisitor {
     //        return .visitChildren
     //    }
     
+    // Visits the let/var declared statements and checks for functions.
     public override func visit(_ node: VariableDeclSyntax) -> SyntaxVisitorContinueKind {
         for binding in node.bindings {
             if (node.bindingSpecifier.text == "let" || node.bindingSpecifier.text == "var") {
@@ -86,8 +89,8 @@ public class FunctionBodyVisitor: SyntaxVisitor {
         return .visitChildren
     }
     
-    // Extracts the final function name from any chained calls
-    // Extracts the function name from a chained call (e.g., self.apiService.performBackgroundWork())
+    // Convenience method that Extracts the final function name from any chained calls
+    // e.g., self.apiService.performBackgroundWork()
     private func extractFunctionName(from functionCall: FunctionCallExprSyntax) -> String? {
         let baseExpression: ExprSyntax = functionCall.calledExpression
         var lastFunctionName: String? = nil
@@ -116,7 +119,7 @@ public class FunctionBodyVisitor: SyntaxVisitor {
         return .visitChildren
     }
     
-    /// Detects `if let` or `guard let` statements
+    /// Detects `if let` or `guard let` statements 
     public override func visit(_ node: ConditionElementSyntax) -> SyntaxVisitorContinueKind {
         if let patternBinding = node.condition.as(OptionalBindingConditionSyntax.self), patternBinding.bindingSpecifier.text == "let" {
             if node.parent?.as(IfExprSyntax.self) != nil {

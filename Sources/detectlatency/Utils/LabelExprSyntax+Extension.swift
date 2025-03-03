@@ -8,7 +8,7 @@
 
 import SwiftSyntax
 
-// A convenience as an extension that converts directly to ClosureExprSyntax type from retrieved LabeledExprSyntaxType
+// Convenience that converts directly to ClosureExprSyntax type from retrieved LabeledExprSyntaxType
 public extension LabeledExprSyntax {
     var toClosure: ClosureExprSyntax? {
         return self.expression.as(ClosureExprSyntax.self)

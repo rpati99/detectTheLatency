@@ -7,6 +7,7 @@
 
 import Foundation
 
+// Interface to handle location of Swift files 
 public protocol FileLocatable {
     func findSwiftFiles(directory: String) -> [URL]
 }

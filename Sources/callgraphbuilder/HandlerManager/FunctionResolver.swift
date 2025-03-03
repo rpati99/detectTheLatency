@@ -11,14 +11,14 @@ import SwiftParser
 
 // Service that detects functions 
 public class FunctionResolver: SyntaxVisitor {
-    let targetFunction: String
+    let targetFunction: String // function to be resolved
     var collectedData: (
         [String],
         [String: String]
     )? // ([calledFunctions], [objectName: objectType])
-    private var calledFunctions: [String] = []
-    private var objectTypes: [String: String] = [:]
-    let filePath: URL
+    private var calledFunctions: [String] = [] // list of functions fetched
+    private var objectTypes: [String: String] = [:] // list of functons fetched as object .
+    let filePath: URL // file path of code
     
     // Global set to track modified functions
     nonisolated(unsafe) static var modifiedFunctions = Set<String>()
@@ -139,16 +139,18 @@ public class FunctionResolver: SyntaxVisitor {
         return .visitChildren
     }
     
+    // changes the old function code with new function code that contains the profiling injected code.
     private func applyRewriter(to functionNode: FunctionDeclSyntax, name: String) {
         if FunctionResolver.modifiedFunctions.contains(name) {
             return
         }
 
+        // Service that handles injection of profiling code inside existing function code.
         let timingCodeInserter = MethodProfilingInserter(message: name)
         let modifiedNode = timingCodeInserter.visit(functionNode).as(FunctionDeclSyntax.self) ?? functionNode
         FunctionResolver.modifiedFunctions.insert(name)
         
-        // Convert to DeclSyntax and write back to the file
+        // Write back to the file
         writeModifiedFunction(modifiedNode)
     }
     

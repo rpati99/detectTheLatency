@@ -10,8 +10,9 @@ import SwiftSyntaxBuilder
 import SwiftParser
 
 
+// Service that performs the insertion of profiling code inside the existing function code.
 class MethodProfilingInserter: SyntaxRewriter {
-    let message: String // carries the name of existing function for specific output
+    let message: String // function name
     // Global set to track which functions have already been modified.
     nonisolated(unsafe) static var modifiedFunctions: Set<String> = []
 
@@ -72,6 +73,7 @@ class MethodProfilingInserter: SyntaxRewriter {
         if let taskCall = statement.item.as(FunctionCallExprSyntax.self),
            let taskName = taskCall.calledExpression.as(DeclReferenceExprSyntax.self)?.baseName.text,
            taskName == "Task" {
+            // Performs insertion of profiling code under Task block
             if let taskClosure = taskCall.trailingClosure {
                 let updatedTaskClosure = insertProfilingIntoTaskClosure(taskClosure, closureIndex: &closureIndex, functionName: functionName)
                 let updatedTaskCall = ExprSyntax(taskCall.with(\.trailingClosure, updatedTaskClosure))
@@ -85,6 +87,8 @@ class MethodProfilingInserter: SyntaxRewriter {
         if let functionCall = statement.item.as(FunctionCallExprSyntax.self),
            let detached = functionCall.calledExpression.as(MemberAccessExprSyntax.self),
            detached.declName.baseName.text == "detached" {
+            
+            // Performs insertion of profiling code under Task.detached block
             if let taskClosure = functionCall.trailingClosure {
                 let updatedTaskClosure = insertProfilingIntoTaskClosure(taskClosure, closureIndex: &closureIndex, functionName: functionName)
                 let updatedTaskCall = ExprSyntax(functionCall.with(\.trailingClosure, updatedTaskClosure))
@@ -98,6 +102,8 @@ class MethodProfilingInserter: SyntaxRewriter {
             if let taskGroupCall = statement.item.as(FunctionCallExprSyntax.self),
                let functionName = taskGroupCall.calledExpression.as(DeclReferenceExprSyntax.self)?.baseName.text,
                functionName == "withTaskGroup" {
+                
+                // Performs insertion of profiling code under withTaskGroup block
                 if let taskGroupClosure = taskGroupCall.trailingClosure {
                     let updatedTaskGroupClosure = insertProfilingIntoTaskClosure(taskGroupClosure, closureIndex: &closureIndex, functionName: functionName)
                     let updatedStatement = statement.with(\.item, .expr(ExprSyntax(taskGroupCall.with(\.trailingClosure, updatedTaskGroupClosure))))
@@ -109,6 +115,8 @@ class MethodProfilingInserter: SyntaxRewriter {
         // --- Handle escaping closures ---
         if let functionCall = statement.item.as(FunctionCallExprSyntax.self),
            hasEscapingClosure(functionCall) {
+            
+            // Performs insertion of profiling code under escaping closures
             let updatedBlock = insertProfilingIntoEscapingClosures(functionCall, closureIndex: &closureIndex, functionName: functionName)
             let updatedStatements = updatedBlock.statements.map { $0 }
             modifiedStatements.append(contentsOf: updatedStatements)
@@ -117,24 +125,32 @@ class MethodProfilingInserter: SyntaxRewriter {
 
         // --- Recurse into conditionals and loops ---
         if let ifStmt = statement.item.as(IfExprSyntax.self) {
+            
+            // detects the conditional statement and looks for asynchronous components inside it.
             let updatedIf = processIf(ifStmt, closureIndex: &closureIndex, functionName: functionName)
             let updatedStatement = statement.with(\.item, .expr(ExprSyntax(updatedIf)))
             modifiedStatements.append(updatedStatement)
             return modifiedStatements
         }
         if let forStmt = statement.item.as(ForStmtSyntax.self) {
+            
+            // detects the for loop statement and looks for asynchronous components inside it.
             let updatedFor = processForIn(forStmt, closureIndex: &closureIndex, functionName: functionName)
             let updatedStatement = statement.with(\.item, .stmt(StmtSyntax(updatedFor)))
             modifiedStatements.append(updatedStatement)
             return modifiedStatements
         }
         if let whileStmt = statement.item.as(WhileStmtSyntax.self) {
+            
+            // detects the while loop statement and looks for asynchronous components inside it.
             let updatedWhile = processWhile(whileStmt, closureIndex: &closureIndex, functionName: functionName)
             let updatedStatement = statement.with(\.item, .stmt(StmtSyntax(updatedWhile)))
             modifiedStatements.append(updatedStatement)
             return modifiedStatements
         }
         if let repeatStmt = statement.item.as(RepeatStmtSyntax.self) {
+            
+            // detects the repeat while loop statement and looks for asynchronous components inside it.
             let updatedRepeat = processRepeatWhile(repeatStmt, closureIndex: &closureIndex, functionName: functionName)
             let updatedStatement = statement.with(\.item, .stmt(StmtSyntax(updatedRepeat)))
             modifiedStatements.append(updatedStatement)
@@ -156,8 +172,9 @@ class MethodProfilingInserter: SyntaxRewriter {
     }
 
     // MARK: - Insertion Helpers
-
     public func insertProfilingIntoTaskClosure(_ closure: ClosureExprSyntax, closureIndex: inout Int, functionName: String) -> ClosureExprSyntax {
+        
+        // Profiling snippet to measure asynchronous executions.
         let profilingCode = """
         
             let asyncStartTime = DispatchTime.now()
@@ -186,6 +203,7 @@ class MethodProfilingInserter: SyntaxRewriter {
         let startTimeVarName = "asyncStartTime\(closureIndex)"
         closureIndex += 1
         
+        // dynamic variable declaration to handle profiling of escaping closures.
         let startTimeCode = """
            
                let \(startTimeVarName) = DispatchTime.now()
@@ -239,6 +257,7 @@ class MethodProfilingInserter: SyntaxRewriter {
 
     // MARK: - Conditionals & Loops Processing
 
+    // Class method that looks for integrates detection/insertion of profiling code method inside the code present in if - else statement.
     private func processIf(_ ifNode: IfExprSyntax, closureIndex: inout Int, functionName: String) -> IfExprSyntax {
         let updatedBody = processCodeBlock(ifNode.body, closureIndex: &closureIndex, functionName: functionName)
         let updatedElse = ifNode.elseBody.map { elseBody -> IfExprSyntax.ElseBody in
@@ -254,7 +273,7 @@ class MethodProfilingInserter: SyntaxRewriter {
         return ifNode.with(\.body, updatedBody).with(\.elseBody, updatedElse)
     }
 
-    // runs when the traversal detects the conditional statements and loop statements to perform insertions under async components
+    // Class method that handles the insertion of profiling code inside nested level async element (Task, Task.detached, escaping closures, withTaskGroup) declarations
     private func processCodeBlock(_ block: CodeBlockSyntax, closureIndex: inout Int, functionName: String) -> CodeBlockSyntax {
         var newItems = CodeBlockItemListSyntax { }
         for stmt in block.statements {
@@ -263,16 +282,19 @@ class MethodProfilingInserter: SyntaxRewriter {
         return block.with(\.statements, newItems)
     }
 
+    // Class method that integrates profiling code insertions into code present inside while loops.
     private func processWhile(_ whileNode: WhileStmtSyntax, closureIndex: inout Int, functionName: String) -> WhileStmtSyntax {
         let updatedBody = processCodeBlock(whileNode.body, closureIndex: &closureIndex, functionName: functionName)
         return whileNode.with(\.body, updatedBody)
     }
 
+    // Class method that integrates profiling code insertions into code present inside for in loops.
     private func processForIn(_ forNode: ForStmtSyntax, closureIndex: inout Int, functionName: String) -> ForStmtSyntax {
         let updatedBody = processCodeBlock(forNode.body, closureIndex: &closureIndex, functionName: functionName)
         return forNode.with(\.body, updatedBody)
     }
-
+    
+    // Class method that integrates profiling code insertions into code present inside repeat while loops.
     private func processRepeatWhile(_ repeatNode: RepeatStmtSyntax, closureIndex: inout Int, functionName: String) -> RepeatStmtSyntax {
         let updatedBody = processCodeBlock(repeatNode.body, closureIndex: &closureIndex, functionName: functionName)
         return repeatNode.with(\.body, updatedBody)

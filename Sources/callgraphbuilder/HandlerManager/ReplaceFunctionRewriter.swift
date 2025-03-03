@@ -8,7 +8,7 @@
 import SwiftSyntax
 import Foundation
 
-// Replaces old function with new profiled syntax included code.
+// Replaces old function with new profiled syntax included code and handles duplication of insertions when a method is detected multiple times.
 class ReplaceFunctionRewriter: SyntaxRewriter {
     let targetFunction: String
     let newFunction: FunctionDeclSyntax
@@ -20,7 +20,7 @@ class ReplaceFunctionRewriter: SyntaxRewriter {
     }
     
     override func visit(_ node: FunctionDeclSyntax) -> DeclSyntax {
-        let isStatic = node.modifiers.contains { $0.name.text == "static" }
+        let isStatic = node.modifiers.contains { $0.name.text == "static" } // handle static methods. 
         if node.name.text == targetFunction || isStatic {
             return DeclSyntax(newFunction)
         }

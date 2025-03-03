@@ -7,6 +7,7 @@
 
 import Foundation
 
+// Service that finds all Swift files inside the codebase. 
 public struct SwiftFileFinder: FileLocatable {
     
     public func findSwiftFiles(directory: String) -> [URL] {
