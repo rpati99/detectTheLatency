@@ -12,8 +12,6 @@
 - Code Generation and Insertion (SyntaxRewriter)
 
 
-*Also a Macro version of Code Generation(https://www.github.com/rpati99/timingMacro) that measures execution time of any input code.*
-
 
 ## Usage 
 
